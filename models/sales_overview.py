@@ -45,19 +45,43 @@ class SalesOverviewService(models.AbstractModel):
         return total
 
     @api.model
-    def get_sales_overview_data(self):
+    def get_sales_overview_data(self, period="month"):
         company = self.env.company
         today = fields.Date.context_today(self)
-        month_start = today.replace(day=1)
-        next_month = month_start + relativedelta(months=1)
-        prev_month_start = month_start - relativedelta(months=1)
+
+        if period == "year":
+            current_start = today.replace(month=1, day=1)
+            current_end = current_start + relativedelta(years=1)
+            prev_start = current_start - relativedelta(years=1)
+            prev_end = current_start
+            period_label = today.strftime("%Y")
+            trend_steps = 5
+            trend_delta = relativedelta(years=1)
+        elif period == "quarter":
+            q_month = ((today.month - 1) // 3) * 3 + 1
+            current_start = today.replace(month=q_month, day=1)
+            current_end = current_start + relativedelta(months=3)
+            prev_start = current_start - relativedelta(months=3)
+            prev_end = current_start
+            period_label = f"Q{(today.month - 1) // 3 + 1} {today.year}"
+            trend_steps = 4
+            trend_delta = relativedelta(months=3)
+        else:
+            current_start = today.replace(day=1)
+            current_end = current_start + relativedelta(months=1)
+            prev_start = current_start - relativedelta(months=1)
+            prev_end = current_start
+            period_label = today.strftime("%B %Y")
+            trend_steps = 6
+            trend_delta = relativedelta(months=1)
 
         user = self.env.user
         has_sales = user.has_group("sales_team.group_sale_salesman")
 
         currency = company.currency_id
         meta = {
-            "month_label": today.strftime("%B %Y"),
+            "period": period,
+            "period_label": period_label,
             "currency_id": currency.id,
             "currency_symbol": currency.symbol or currency.name,
             "has_sales_access": has_sales,
@@ -67,48 +91,49 @@ class SalesOverviewService(models.AbstractModel):
             ),
         }
 
-        monthly_labels = []
-        monthly_revenue = []
-        monthly_profit = []
-        month_orders = self.env["sale.order"]
-        prev_month_orders = self.env["sale.order"]
+        trend_labels = []
+        trend_revenue = []
+        trend_profit = []
 
-        for i in range(5, -1, -1):
-            period_start = month_start - relativedelta(months=i)
-            period_end = period_start + relativedelta(months=1)
-            monthly_labels.append(period_start.strftime("%b"))
-            if has_sales:
-                orders_m = self._orders_in_period(company, period_start, period_end)
-                monthly_revenue.append(self._sum_untaxed(orders_m))
-                monthly_profit.append(self._gross_profit_from_orders(orders_m))
+        for i in range(trend_steps - 1, -1, -1):
+            p_start = current_start - (trend_delta * i)
+            p_end = p_start + trend_delta
+            
+            if period == "year":
+                trend_labels.append(p_start.strftime("%Y"))
+            elif period == "quarter":
+                trend_labels.append(f"Q{(p_start.month - 1) // 3 + 1} '{p_start.strftime('%y')}")
             else:
-                monthly_revenue.append(0.0)
-                monthly_profit.append(0.0)
+                trend_labels.append(p_start.strftime("%b"))
+
+            if has_sales:
+                orders_p = self._orders_in_period(company, p_start, p_end)
+                trend_revenue.append(self._sum_untaxed(orders_p))
+                trend_profit.append(self._gross_profit_from_orders(orders_p))
+            else:
+                trend_revenue.append(0.0)
+                trend_profit.append(0.0)
 
         if has_sales:
-            month_orders = self._orders_in_period(company, month_start, next_month)
-            prev_month_orders = self._orders_in_period(
-                company, prev_month_start, month_start
-            )
+            current_orders = self._orders_in_period(company, current_start, current_end)
+            prev_orders = self._orders_in_period(company, prev_start, prev_end)
+        else:
+            current_orders = self.env["sale.order"]
+            prev_orders = self.env["sale.order"]
 
-        revenue_m = self._sum_untaxed(month_orders) if has_sales else 0.0
-        revenue_prev = self._sum_untaxed(prev_month_orders) if has_sales else 0.0
-        profit_m = (
-            self._gross_profit_from_orders(month_orders) if has_sales else 0.0
-        )
-        profit_prev = (
-            self._gross_profit_from_orders(prev_month_orders) if has_sales else 0.0
-        )
+        revenue_m = self._sum_untaxed(current_orders) if has_sales else 0.0
+        revenue_prev = self._sum_untaxed(prev_orders) if has_sales else 0.0
+        profit_m = self._gross_profit_from_orders(current_orders) if has_sales else 0.0
+        profit_prev = self._gross_profit_from_orders(prev_orders) if has_sales else 0.0
+        
         margin_pct = round((profit_m / revenue_m * 100), 1) if revenue_m else 0.0
-        orders_count = len(month_orders) if has_sales else 0
-        orders_prev = len(prev_month_orders) if has_sales else 0
+        orders_count = len(current_orders) if has_sales else 0
+        orders_prev = len(prev_orders) if has_sales else 0
 
         aov = round(revenue_m / orders_count, 2) if orders_count else 0.0
 
-        avg_rev = (
-            sum(monthly_revenue) / len(monthly_revenue) if monthly_revenue else 0.0
-        )
-        target_line = [round(avg_rev * 1.05, 2)] * 6 if monthly_revenue else []
+        avg_rev = sum(trend_revenue) / len(trend_revenue) if trend_revenue else 0.0
+        target_line = [round(avg_rev * 1.05, 2)] * trend_steps if trend_revenue else []
 
         # Open quotations (pipeline)
         quotations_count = 0
@@ -124,10 +149,10 @@ class SalesOverviewService(models.AbstractModel):
             quotations_value = sum(quotes.mapped("amount_untaxed"))
 
         revenue_by_category = []
-        if has_sales and month_orders:
+        if has_sales and current_orders:
             cat_amount = defaultdict(float)
             lines = self.env["sale.order.line"].search(
-                [("order_id", "in", month_orders.ids)]
+                [("order_id", "in", current_orders.ids)]
             )
             for line in lines:
                 if not line.product_id or not line.product_id.categ_id:
@@ -147,9 +172,9 @@ class SalesOverviewService(models.AbstractModel):
             ]
 
         top_sellers = []
-        if has_sales and month_orders:
+        if has_sales and current_orders:
             grouped = self.env["sale.order.line"].read_group(
-                domain=[("order_id", "in", month_orders.ids)],
+                domain=[("order_id", "in", current_orders.ids)],
                 fields=["product_id", "price_subtotal:sum"],
                 groupby=["product_id"],
                 orderby="price_subtotal desc",
@@ -173,10 +198,10 @@ class SalesOverviewService(models.AbstractModel):
                 )
 
         top_customers = []
-        if has_sales and month_orders:
+        if has_sales and current_orders:
             grouped_c = self.env["sale.order"].read_group(
                 domain=[
-                    ("id", "in", month_orders.ids),
+                    ("id", "in", current_orders.ids),
                     ("partner_id", "!=", False),
                 ],
                 fields=["partner_id", "amount_untaxed:sum"],
@@ -214,9 +239,9 @@ class SalesOverviewService(models.AbstractModel):
             "meta": meta,
             "kpis": kpis,
             "monthly_trend": {
-                "labels": monthly_labels,
-                "revenue": monthly_revenue,
-                "gross_profit": monthly_profit,
+                "labels": trend_labels,
+                "revenue": trend_revenue,
+                "gross_profit": trend_profit,
                 "target_revenue": target_line,
             },
             "revenue_by_category": revenue_by_category,

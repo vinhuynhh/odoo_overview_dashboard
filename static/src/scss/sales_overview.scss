@@ -290,12 +290,97 @@ body.o_overview_sidebar_mode .o_main_navbar .o_menu_sections {
 }
 
 .o_so_loading {
-    margin: 2rem;
-    padding: 1rem 1.25rem;
-    border-radius: $o-radius-md;
-    background: $o-pastel-blue-mist;
-    border: 1px solid rgba(138, 180, 248, 0.35);
-    color: $o-pastel-blue-deep;
+    display: none;
+}
+
+.o_so_loading_overlay {
+    opacity: 0.6;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.o_so_period_selector {
+    select {
+        background-color: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(138, 180, 248, 0.4);
+        border-radius: $o-radius-md;
+        padding: 0.4rem 2rem 0.4rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: $o-pastel-blue-deep;
+        box-shadow: 0 2px 8px rgba(61, 99, 140, 0.05);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover, &:focus {
+            background-color: #fff;
+            border-color: $o-pastel-blue-mid;
+            box-shadow: 0 4px 12px rgba(61, 99, 140, 0.1);
+            outline: none;
+        }
+    }
+}
+
+/* Skeleton Loader */
+@keyframes pulse-skeleton {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.o_so_skeleton {
+    padding: 0;
+    animation: pulse-skeleton 1.5s ease-in-out infinite;
+}
+
+.o_so_skeleton_hero {
+    height: 120px;
+    background: linear-gradient(145deg, #ffffff 0%, rgba(240, 246, 255, 0.92) 42%, #f8fafc 100%);
+    border-bottom: 1px solid rgba(138, 180, 248, 0.12);
+}
+
+.o_so_skeleton_content {
+    padding: 1.75rem 2.25rem 2.75rem;
+}
+
+.o_so_skeleton_kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.25rem;
+    
+    @media (min-width: 1200px) {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+.o_so_skeleton_kpi {
+    height: 110px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.o_so_skeleton_charts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.o_so_skeleton_chart_lg {
+    flex: 1 1 60%;
+    height: 380px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.o_so_skeleton_chart_sm {
+    flex: 1 1 30%;
+    height: 380px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .o_so_error {
@@ -411,6 +496,17 @@ body.o_overview_sidebar_mode .o_main_navbar .o_menu_sections {
     }
 }
 
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .o_so_kpi {
     position: relative;
     background: rgba(255, 255, 255, 0.82);
@@ -420,6 +516,9 @@ body.o_overview_sidebar_mode .o_main_navbar .o_menu_sections {
     border: 1px solid rgba(148, 163, 184, 0.14);
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 4px 24px rgba(61, 99, 140, 0.06);
     transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    animation: fadeInUp 0.4s ease-out forwards;
+    animation-delay: calc(var(--animation-order, 0) * 0.05s);
+    opacity: 0;
 
     &::before {
         content: "";
@@ -552,6 +651,9 @@ body.o_overview_sidebar_mode .o_main_navbar .o_menu_sections {
     border: 1px solid rgba(148, 163, 184, 0.12);
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04), 0 20px 48px rgba(61, 99, 140, 0.07);
     padding: 1.2rem 1.35rem 1.4rem;
+    animation: fadeInUp 0.5s ease-out forwards;
+    animation-delay: calc(var(--animation-order, 0) * 0.05s);
+    opacity: 0;
 }
 
 .o_so_panel_head {

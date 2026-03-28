@@ -34,7 +34,8 @@ const DONUT_PALETTE = [
 function emptyDashboardData() {
     return {
         meta: {
-            month_label: "",
+            period_label: "",
+            period: "month",
             currency_id: null,
             currency_symbol: "",
             has_sales_access: false,
@@ -104,22 +105,12 @@ export class SalesOverviewDashboard extends Component {
             error: null,
             data: emptyDashboardData(),
             sidebarCollapsed: browser.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1",
+            period: "month",
         });
 
         onWillStart(async () => {
             await loadBundle("web.chartjs_lib");
-            try {
-                const result = await rpc("/odoo_overview_dashboard/sales/data", {});
-                if (result?.error) {
-                    this.state.error = result.error;
-                } else {
-                    this.state.data = normalizeDashboardPayload(result);
-                }
-            } catch {
-                this.state.error = "Failed to load sales overview";
-            } finally {
-                this.state.loading = false;
-            }
+            await this.fetchData();
         });
 
         useEffect(
@@ -145,6 +136,31 @@ export class SalesOverviewDashboard extends Component {
         );
 
         onWillUnmount(() => this._destroyCharts());
+    }
+
+    async fetchData() {
+        this.state.loading = true;
+        this.state.error = null;
+        try {
+            const result = await rpc("/odoo_overview_dashboard/sales/data", {
+                period: this.state.period,
+            });
+            if (result?.error) {
+                this.state.error = result.error;
+            } else {
+                this.state.data = normalizeDashboardPayload(result);
+            }
+        } catch {
+            this.state.error = "Failed to load sales overview";
+        } finally {
+            this.state.loading = false;
+        }
+    }
+
+    async setPeriod(period) {
+        if (this.state.period === period) return;
+        this.state.period = period;
+        await this.fetchData();
     }
 
     get overviewAppTitle() {

@@ -41,8 +41,19 @@
             </aside>
             <main class="o_overview_main">
                 <div class="o_so_dashboard">
-                    <t t-if="state.loading">
-                        <div class="o_so_loading">Loading…</div>
+                    <t t-if="state.loading and !state.data.meta.period_label">
+                        <div class="o_so_skeleton">
+                            <div class="o_so_skeleton_hero"></div>
+                            <div class="o_so_skeleton_content">
+                                <div class="o_so_skeleton_kpis">
+                                    <div class="o_so_skeleton_kpi" t-foreach="[1,2,3,4,5]" t-as="i" t-key="i"></div>
+                                </div>
+                                <div class="o_so_skeleton_charts">
+                                    <div class="o_so_skeleton_chart_lg"></div>
+                                    <div class="o_so_skeleton_chart_sm"></div>
+                                </div>
+                            </div>
+                        </div>
                     </t>
 
                     <t t-elif="state.error">
@@ -53,24 +64,35 @@
                         <header class="o_so_hero">
                             <div class="o_so_hero_glow" aria-hidden="true"/>
                             <div class="o_so_hero_text">
-                                <p class="o_so_eyebrow">Sales intelligence</p>
-                                <h1 class="o_so_title">Sales overview</h1>
-                                <p class="o_so_sub">
-                                    Welcome back<t t-if="sessionUserName">, <strong t-esc="sessionUserName"/></t>
-                                    <span class="o_so_dot">·</span>
-                                    <span class="text-muted" t-esc="state.data.meta.month_label" />
-                                </p>
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                    <div>
+                                        <p class="o_so_eyebrow">Sales intelligence</p>
+                                        <h1 class="o_so_title">Sales overview</h1>
+                                        <p class="o_so_sub">
+                                            Welcome back<t t-if="sessionUserName">, <strong t-esc="sessionUserName"/></t>
+                                            <span class="o_so_dot">·</span>
+                                            <span class="text-muted" t-esc="state.data.meta.period_label" />
+                                        </p>
+                                    </div>
+                                    <div class="o_so_period_selector">
+                                        <select class="form-select" t-on-change="(e) => this.setPeriod(e.target.value)">
+                                            <option value="month" t-att-selected="state.period === 'month'">This Month</option>
+                                            <option value="quarter" t-att-selected="state.period === 'quarter'">This Quarter</option>
+                                            <option value="year" t-att-selected="state.period === 'year'">This Year</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </header>
 
-                        <div class="o_so_content">
+                        <div class="o_so_content" t-att-class="{ 'o_so_loading_overlay': state.loading }">
                             <section class="o_so_section" t-if="state.data.meta.has_sales_access">
                                 <div class="o_so_section_head">
                                     <h2 class="o_so_section_title">Key metrics</h2>
-                                    <p class="o_so_section_desc">Month-to-date performance and pipeline health</p>
+                                    <p class="o_so_section_desc">Performance and pipeline health</p>
                                 </div>
                                 <div class="o_so_kpi_grid">
-                                <article class="o_so_kpi">
+                                <article class="o_so_kpi" style="--animation-order: 1;">
                                     <div class="o_so_kpi_top">
                                         <span class="o_so_kpi_label">Net revenue</span>
                                         <i class="fa fa-line-chart o_so_kpi_ico" aria-hidden="true"/>
@@ -78,10 +100,10 @@
                                     <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.net_revenue)" />
                                     <div class="o_so_kpi_foot">
                                         <span t-att-class="deltaPillClass(state.data.kpis.net_revenue_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.net_revenue_delta_pct)" />
-                                        <span class="o_so_kpi_hint">vs prior month</span>
+                                        <span class="o_so_kpi_hint">vs prior period</span>
                                     </div>
                                 </article>
-                                <article class="o_so_kpi">
+                                <article class="o_so_kpi" style="--animation-order: 2;">
                                     <div class="o_so_kpi_top">
                                         <span class="o_so_kpi_label">Gross profit</span>
                                         <i class="fa fa-money o_so_kpi_ico" aria-hidden="true"/>
@@ -92,7 +114,7 @@
                                         <span t-att-class="deltaPillClass(state.data.kpis.gross_profit_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.gross_profit_delta_pct)" />
                                     </div>
                                 </article>
-                                <article class="o_so_kpi">
+                                <article class="o_so_kpi" style="--animation-order: 3;">
                                     <div class="o_so_kpi_top">
                                         <span class="o_so_kpi_label">Orders</span>
                                         <i class="fa fa-file-text-o o_so_kpi_ico" aria-hidden="true"/>
@@ -100,20 +122,20 @@
                                     <p class="o_so_kpi_value" t-esc="state.data.kpis.orders_count" />
                                     <div class="o_so_kpi_foot">
                                         <span t-att-class="deltaPillClass(state.data.kpis.orders_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.orders_delta_pct)" />
-                                        <span class="o_so_kpi_hint">vs prior month</span>
+                                        <span class="o_so_kpi_hint">vs prior period</span>
                                     </div>
                                 </article>
-                                <article class="o_so_kpi">
+                                <article class="o_so_kpi" style="--animation-order: 4;">
                                     <div class="o_so_kpi_top">
                                         <span class="o_so_kpi_label">Avg. order value</span>
                                         <i class="fa fa-shopping-cart o_so_kpi_ico" aria-hidden="true"/>
                                     </div>
                                     <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.aov)" />
                                     <div class="o_so_kpi_foot">
-                                        <span class="o_so_kpi_hint">This month</span>
+                                        <span class="o_so_kpi_hint">This period</span>
                                     </div>
                                 </article>
-                                <article class="o_so_kpi o_so_kpi_highlight">
+                                <article class="o_so_kpi o_so_kpi_highlight" style="--animation-order: 5;">
                                     <div class="o_so_kpi_top">
                                         <span class="o_so_kpi_label">Open quotations</span>
                                         <i class="fa fa-inbox o_so_kpi_ico" aria-hidden="true"/>
@@ -140,10 +162,10 @@
                                 </div>
                                 <div class="o_so_charts row g-3 mb-0">
                                 <div class="col-12 col-xl-8">
-                                    <div class="o_so_panel h-100">
+                                    <div class="o_so_panel h-100" style="--animation-order: 6;">
                                         <div class="o_so_panel_head">
                                             <h3 class="o_so_panel_title">Revenue &amp; gross profit</h3>
-                                            <span class="o_so_panel_badge">Last 6 months</span>
+                                            <span class="o_so_panel_badge">Trend</span>
                                         </div>
                                         <div class="o_so_chart">
                                             <canvas t-ref="monthlyCanvas" />
@@ -151,10 +173,10 @@
                                     </div>
                                 </div>
                                 <div class="col-12 col-xl-4">
-                                    <div class="o_so_panel h-100">
+                                    <div class="o_so_panel h-100" style="--animation-order: 7;">
                                         <div class="o_so_panel_head">
                                             <h3 class="o_so_panel_title">Mix by category</h3>
-                                            <span class="o_so_panel_badge">This month</span>
+                                            <span class="o_so_panel_badge">This period</span>
                                         </div>
                                         <div class="o_so_chart o_so_chart_donut">
                                             <t t-if="state.data.revenue_by_category.length">
@@ -176,7 +198,7 @@
                                 </div>
                                 <div class="row g-3">
                                 <div class="col-12 col-lg-6">
-                                    <div class="o_so_panel h-100">
+                                    <div class="o_so_panel h-100" style="--animation-order: 8;">
                                         <div class="o_so_panel_head">
                                             <h3 class="o_so_panel_title">Top products</h3>
                                             <span class="o_so_panel_badge">By revenue</span>
@@ -194,15 +216,15 @@
                                             </tbody>
                                         </table>
                                         <t t-if="!state.data.top_sellers.length">
-                                            <p class="o_so_table_empty text-muted mb-0">No sales this month.</p>
+                                            <p class="o_so_table_empty text-muted mb-0">No sales this period.</p>
                                         </t>
                                     </div>
                                 </div>
                                 <div class="col-12 col-lg-6">
-                                    <div class="o_so_panel h-100">
+                                    <div class="o_so_panel h-100" style="--animation-order: 9;">
                                         <div class="o_so_panel_head">
                                             <h3 class="o_so_panel_title">Top customers</h3>
-                                            <span class="o_so_panel_badge">This month</span>
+                                            <span class="o_so_panel_badge">This period</span>
                                         </div>
                                         <table class="o_so_table table mb-0">
                                             <tbody>
@@ -216,7 +238,7 @@
                                             </tbody>
                                         </table>
                                         <t t-if="!state.data.top_customers.length">
-                                            <p class="o_so_table_empty text-muted mb-0">No customers this month.</p>
+                                            <p class="o_so_table_empty text-muted mb-0">No customers this period.</p>
                                         </t>
                                     </div>
                                 </div>
