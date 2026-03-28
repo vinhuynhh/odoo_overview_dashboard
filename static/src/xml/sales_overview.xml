@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.SalesOverviewDashboard">
+        <div class="o_overview_app_layout" t-att-class="{ o_overview_sidebar_collapsed: state.sidebarCollapsed }">
+            <aside class="o_overview_sidebar" aria-label="Overview navigation">
+                <div class="o_overview_sidebar_header">
+                    <div class="o_overview_sidebar_brand" t-att-title="overviewAppTitle">
+                        <i class="fa fa-th-large o_overview_sidebar_logo" aria-hidden="true"/>
+                        <span class="o_overview_sidebar_brand_text" t-esc="overviewAppTitle"/>
+                    </div>
+                    <button
+                        type="button"
+                        class="o_overview_sidebar_toggle"
+                        t-att-title="sidebarToggleLabel"
+                        t-att-aria-expanded="state.sidebarCollapsed ? 'false' : 'true'"
+                        t-on-click="() => this.toggleSidebar()"
+                    >
+                        <i
+                            t-att-class="state.sidebarCollapsed ? 'fa fa-angle-double-right' : 'fa fa-angle-double-left'"
+                            aria-hidden="true"
+                        />
+                    </button>
+                </div>
+                <nav class="o_overview_sidebar_nav">
+                    <t t-foreach="overviewNavItems" t-as="nav" t-key="nav.id">
+                        <button
+                            type="button"
+                            class="o_overview_nav_btn"
+                            t-att-class="{ o_active: isOverviewNavActive(nav) }"
+                            t-att-title="nav.name"
+                            t-on-click="() => this.onOverviewNavClick(nav)"
+                        >
+                            <i
+                                t-att-class="'fa ' + navIconClass(nav) + ' o_overview_nav_icon'"
+                                aria-hidden="true"
+                            />
+                            <span class="o_overview_nav_label" t-esc="nav.name"/>
+                        </button>
+                    </t>
+                </nav>
+            </aside>
+            <main class="o_overview_main">
+                <div class="o_so_dashboard">
+                    <t t-if="state.loading">
+                        <div class="o_so_loading">Loading…</div>
+                    </t>
+
+                    <t t-elif="state.error">
+                        <div class="o_so_error" t-esc="state.error" />
+                    </t>
+
+                    <t t-else="">
+                        <header class="o_so_hero">
+                            <div class="o_so_hero_glow" aria-hidden="true"/>
+                            <div class="o_so_hero_text">
+                                <p class="o_so_eyebrow">Sales intelligence</p>
+                                <h1 class="o_so_title">Sales overview</h1>
+                                <p class="o_so_sub">
+                                    Welcome back<t t-if="sessionUserName">, <strong t-esc="sessionUserName"/></t>
+                                    <span class="o_so_dot">·</span>
+                                    <span class="text-muted" t-esc="state.data.meta.month_label" />
+                                </p>
+                            </div>
+                        </header>
+
+                        <div class="o_so_content">
+                            <section class="o_so_section" t-if="state.data.meta.has_sales_access">
+                                <div class="o_so_section_head">
+                                    <h2 class="o_so_section_title">Key metrics</h2>
+                                    <p class="o_so_section_desc">Month-to-date performance and pipeline health</p>
+                                </div>
+                                <div class="o_so_kpi_grid">
+                                <article class="o_so_kpi">
+                                    <div class="o_so_kpi_top">
+                                        <span class="o_so_kpi_label">Net revenue</span>
+                                        <i class="fa fa-line-chart o_so_kpi_ico" aria-hidden="true"/>
+                                    </div>
+                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.net_revenue)" />
+                                    <div class="o_so_kpi_foot">
+                                        <span t-att-class="deltaPillClass(state.data.kpis.net_revenue_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.net_revenue_delta_pct)" />
+                                        <span class="o_so_kpi_hint">vs prior month</span>
+                                    </div>
+                                </article>
+                                <article class="o_so_kpi">
+                                    <div class="o_so_kpi_top">
+                                        <span class="o_so_kpi_label">Gross profit</span>
+                                        <i class="fa fa-money o_so_kpi_ico" aria-hidden="true"/>
+                                    </div>
+                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.gross_profit)" />
+                                    <div class="o_so_kpi_foot o_so_kpi_foot_stack">
+                                        <span class="o_so_margin">Margin <strong t-esc="state.data.kpis.margin_pct"/>%</span>
+                                        <span t-att-class="deltaPillClass(state.data.kpis.gross_profit_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.gross_profit_delta_pct)" />
+                                    </div>
+                                </article>
+                                <article class="o_so_kpi">
+                                    <div class="o_so_kpi_top">
+                                        <span class="o_so_kpi_label">Orders</span>
+                                        <i class="fa fa-file-text-o o_so_kpi_ico" aria-hidden="true"/>
+                                    </div>
+                                    <p class="o_so_kpi_value" t-esc="state.data.kpis.orders_count" />
+                                    <div class="o_so_kpi_foot">
+                                        <span t-att-class="deltaPillClass(state.data.kpis.orders_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.orders_delta_pct)" />
+                                        <span class="o_so_kpi_hint">vs prior month</span>
+                                    </div>
+                                </article>
+                                <article class="o_so_kpi">
+                                    <div class="o_so_kpi_top">
+                                        <span class="o_so_kpi_label">Avg. order value</span>
+                                        <i class="fa fa-shopping-cart o_so_kpi_ico" aria-hidden="true"/>
+                                    </div>
+                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.aov)" />
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">This month</span>
+                                    </div>
+                                </article>
+                                <article class="o_so_kpi o_so_kpi_highlight">
+                                    <div class="o_so_kpi_top">
+                                        <span class="o_so_kpi_label">Open quotations</span>
+                                        <i class="fa fa-inbox o_so_kpi_ico" aria-hidden="true"/>
+                                    </div>
+                                    <p class="o_so_kpi_value">
+                                        <t t-esc="state.data.kpis.quotations_count"/>
+                                        <span class="o_so_kpi_subval text-muted"> · <t t-esc="formatMoney(state.data.kpis.quotations_value)"/></span>
+                                    </p>
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">Draft &amp; sent</span>
+                                    </div>
+                                </article>
+                                </div>
+                            </section>
+
+                            <section class="o_so_empty_sales text-muted" t-if="!state.data.meta.has_sales_access">
+                                You need Sales access to view this dashboard.
+                            </section>
+
+                            <section class="o_so_section" t-if="state.data.meta.has_sales_access">
+                                <div class="o_so_section_head">
+                                    <h2 class="o_so_section_title">Trends &amp; mix</h2>
+                                    <p class="o_so_section_desc">Revenue trajectory and category contribution</p>
+                                </div>
+                                <div class="o_so_charts row g-3 mb-0">
+                                <div class="col-12 col-xl-8">
+                                    <div class="o_so_panel h-100">
+                                        <div class="o_so_panel_head">
+                                            <h3 class="o_so_panel_title">Revenue &amp; gross profit</h3>
+                                            <span class="o_so_panel_badge">Last 6 months</span>
+                                        </div>
+                                        <div class="o_so_chart">
+                                            <canvas t-ref="monthlyCanvas" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-xl-4">
+                                    <div class="o_so_panel h-100">
+                                        <div class="o_so_panel_head">
+                                            <h3 class="o_so_panel_title">Mix by category</h3>
+                                            <span class="o_so_panel_badge">This month</span>
+                                        </div>
+                                        <div class="o_so_chart o_so_chart_donut">
+                                            <t t-if="state.data.revenue_by_category.length">
+                                                <canvas t-ref="donutCanvas" />
+                                            </t>
+                                            <t t-else="">
+                                                <div class="o_so_chart_empty">No category data</div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+                            </section>
+
+                            <section class="o_so_section" t-if="state.data.meta.has_sales_access">
+                                <div class="o_so_section_head">
+                                    <h2 class="o_so_section_title">Top performers</h2>
+                                    <p class="o_so_section_desc">Products and customers by revenue this period</p>
+                                </div>
+                                <div class="row g-3">
+                                <div class="col-12 col-lg-6">
+                                    <div class="o_so_panel h-100">
+                                        <div class="o_so_panel_head">
+                                            <h3 class="o_so_panel_title">Top products</h3>
+                                            <span class="o_so_panel_badge">By revenue</span>
+                                        </div>
+                                        <table class="o_so_table table mb-0">
+                                            <tbody>
+                                                <tr t-foreach="state.data.top_sellers" t-as="s" t-key="s.product_id">
+                                                    <td><span class="o_so_rank" t-esc="s_index + 1"/></td>
+                                                    <td>
+                                                        <span class="o_so_cell_main" t-esc="s.name"/>
+                                                        <span class="o_so_cell_sub text-muted" t-esc="s.categ_name"/>
+                                                    </td>
+                                                    <td class="text-end fw-semibold" t-esc="formatMoney(s.amount)" />
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <t t-if="!state.data.top_sellers.length">
+                                            <p class="o_so_table_empty text-muted mb-0">No sales this month.</p>
+                                        </t>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-lg-6">
+                                    <div class="o_so_panel h-100">
+                                        <div class="o_so_panel_head">
+                                            <h3 class="o_so_panel_title">Top customers</h3>
+                                            <span class="o_so_panel_badge">This month</span>
+                                        </div>
+                                        <table class="o_so_table table mb-0">
+                                            <tbody>
+                                                <tr t-foreach="state.data.top_customers" t-as="c" t-key="c.partner_id">
+                                                    <td><span class="o_so_rank" t-esc="c_index + 1"/></td>
+                                                    <td>
+                                                        <span class="o_so_cell_main" t-esc="c.name"/>
+                                                    </td>
+                                                    <td class="text-end fw-semibold" t-esc="formatMoney(c.amount)" />
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <t t-if="!state.data.top_customers.length">
+                                            <p class="o_so_table_empty text-muted mb-0">No customers this month.</p>
+                                        </t>
+                                    </div>
+                                </div>
+                                </div>
+                            </section>
+
+                            <p class="o_so_disclaimer" t-esc="state.data.meta.disclaimer" />
+                        </div>
+                    </t>
+                </div>
+            </main>
+        </div>
+    </t>
+</templates>

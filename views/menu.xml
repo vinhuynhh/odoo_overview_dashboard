@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root application menu -->
+    <menuitem
+        id="menu_overview_root"
+        name="Overview"
+        sequence="1"
+        web_icon="odoo_overview_dashboard,static/description/icon.png"
+    />
+
+    <!-- Sales Overview sub-menu -->
+    <menuitem
+        id="menu_sales_overview_dashboard"
+        name="Sales overview"
+        parent="menu_overview_root"
+        action="action_sales_overview_dashboard"
+        sequence="10"
+    />
+</odoo>

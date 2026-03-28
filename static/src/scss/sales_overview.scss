@@ -1,0 +1,656 @@
+// Pastel blue SaaS theme (light shell, blue accents — reference-style layout).
+$o-pastel-blue: #8ab4f8;
+$o-pastel-blue-mid: #6b9ae8;
+$o-pastel-blue-deep: #5886dc;
+$o-pastel-blue-ice: #e8f0fe;
+$o-pastel-blue-mist: #f0f6ff;
+$o-sidebar-bg: #3a4a63;
+$o-sidebar-border: rgba(255, 255, 255, 0.06);
+$o-page-bg: #f4f7fb;
+$o-card-bg: #ffffff;
+$o-card-shadow: 0 4px 24px rgba(61, 99, 140, 0.08);
+$o-text: #1e293b;
+$o-text-muted: #64748b;
+$o-radius-lg: 14px;
+$o-radius-md: 12px;
+$o-danger: #e85d6a;
+$o-danger-soft: #fee2e2;
+
+// Only while the Overview dashboard client action is mounted.
+body.o_overview_sidebar_mode .o_main_navbar .o_menu_sections {
+    display: none !important;
+}
+
+.o_overview_app_layout {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    width: 100%;
+    background: $o-page-bg;
+    min-height: calc(100vh - var(--o-navbar-height, 46px));
+    max-height: calc(100vh - var(--o-navbar-height, 46px));
+    overflow: hidden;
+}
+
+.o_overview_sidebar {
+    flex: 0 0 232px;
+    max-width: 232px;
+    background: linear-gradient(180deg, $o-sidebar-bg 0%, darken($o-sidebar-bg, 4%) 100%);
+    border-right: 1px solid $o-sidebar-border;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0.85rem 1.25rem;
+    box-shadow: 4px 0 32px rgba(42, 58, 92, 0.12);
+    transition: flex-basis 0.22s ease, max-width 0.22s ease, padding 0.22s ease;
+}
+
+.o_overview_sidebar_header {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.o_overview_sidebar_brand {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.55);
+    padding: 0 0.25rem;
+}
+
+.o_overview_sidebar_logo {
+    color: $o-pastel-blue;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.o_overview_sidebar_brand_text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.o_overview_sidebar_toggle {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: none;
+    border-radius: $o-radius-md;
+    color: rgba(255, 255, 255, 0.65);
+    background: rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+    }
+
+    .fa {
+        font-size: 0.95rem;
+    }
+}
+
+.o_overview_app_layout.o_overview_sidebar_collapsed .o_overview_sidebar {
+    flex: 0 0 58px;
+    max-width: 58px;
+    padding: 0.75rem 0.4rem 1rem;
+}
+
+.o_overview_app_layout.o_overview_sidebar_collapsed .o_overview_sidebar_header {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.65rem;
+}
+
+.o_overview_app_layout.o_overview_sidebar_collapsed .o_overview_sidebar_brand {
+    justify-content: center;
+    padding: 0;
+}
+
+.o_overview_app_layout.o_overview_sidebar_collapsed .o_overview_sidebar_brand_text {
+    display: none;
+}
+
+.o_overview_app_layout.o_overview_sidebar_collapsed .o_overview_sidebar_toggle {
+    width: 100%;
+}
+
+.o_overview_sidebar_nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.o_overview_nav_btn {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    text-align: left;
+    border: none;
+    border-radius: $o-radius-md;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.72);
+    background: transparent;
+    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.07);
+        color: #fff;
+    }
+
+    &.o_active {
+        background: rgba(138, 180, 248, 0.22);
+        color: #fff;
+        box-shadow: inset 3px 0 0 $o-pastel-blue;
+    }
+
+    .o_overview_nav_icon {
+        flex-shrink: 0;
+        width: 1.15rem;
+        text-align: center;
+        opacity: 0.92;
+        font-size: 0.95rem;
+    }
+
+    .o_overview_nav_label {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.o_overview_app_layout.o_overview_sidebar_collapsed .o_overview_nav_btn {
+    justify-content: center;
+    padding: 0.6rem 0.35rem;
+
+    .o_overview_nav_label {
+        display: none;
+    }
+
+    .o_overview_nav_icon {
+        margin: 0;
+    }
+}
+
+.o_overview_main {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: $o-page-bg;
+    background-image: radial-gradient(ellipse 120% 80% at 100% 0%, rgba(138, 180, 248, 0.12) 0%, transparent 55%),
+        radial-gradient(ellipse 90% 60% at 0% 40%, rgba(232, 240, 254, 0.9) 0%, transparent 50%);
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 767.98px) {
+    .o_overview_app_layout {
+        flex-direction: column;
+        min-height: 0;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .o_overview_sidebar {
+        flex: 0 0 auto;
+        max-width: none;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 0.65rem;
+    }
+
+    .o_overview_sidebar_header {
+        flex: 0 0 auto;
+        flex-direction: row;
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+        padding-right: 0.5rem;
+        gap: 0.35rem;
+    }
+
+    .o_overview_sidebar_brand {
+        padding: 0 0.5rem 0 0;
+    }
+
+    .o_overview_app_layout.o_overview_sidebar_collapsed .o_overview_sidebar {
+        flex: 0 0 auto;
+        max-width: none;
+        flex-direction: row;
+        padding: 0.65rem;
+    }
+
+    .o_overview_app_layout.o_overview_sidebar_collapsed .o_overview_sidebar_header {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .o_overview_app_layout.o_overview_sidebar_collapsed .o_overview_sidebar_brand_text {
+        display: inline;
+    }
+
+    .o_overview_app_layout.o_overview_sidebar_collapsed .o_overview_nav_label {
+        display: inline !important;
+    }
+
+    .o_overview_app_layout.o_overview_sidebar_collapsed .o_overview_nav_btn {
+        width: auto;
+        justify-content: flex-start;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .o_overview_sidebar_nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        flex: 1;
+        overflow: visible;
+    }
+
+    .o_overview_nav_btn {
+        width: auto;
+        white-space: nowrap;
+    }
+
+    .o_overview_main {
+        overflow: visible;
+        min-height: auto;
+    }
+}
+
+// ---- Sales overview (modern SaaS) ----
+.o_so_dashboard {
+    min-height: 100%;
+    color: $o-text;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.o_so_loading {
+    margin: 2rem;
+    padding: 1rem 1.25rem;
+    border-radius: $o-radius-md;
+    background: $o-pastel-blue-mist;
+    border: 1px solid rgba(138, 180, 248, 0.35);
+    color: $o-pastel-blue-deep;
+}
+
+.o_so_error {
+    margin: 2rem;
+    padding: 1rem 1.25rem;
+    border-radius: $o-radius-md;
+    background: $o-danger-soft;
+    color: darken($o-danger, 16%);
+    border: 1px solid rgba(232, 93, 106, 0.35);
+}
+
+.o_so_hero {
+    position: relative;
+    overflow: hidden;
+    padding: 2.25rem 2.25rem 1.5rem;
+    background: linear-gradient(145deg, #ffffff 0%, rgba(240, 246, 255, 0.92) 42%, #f8fafc 100%);
+    border-bottom: 1px solid rgba(138, 180, 248, 0.12);
+}
+
+.o_so_hero_glow {
+    position: absolute;
+    top: -40%;
+    right: -8%;
+    // Pass through CSS min() — libsass evaluates min() and errors on mixed vw/rem units.
+    width: unquote("min(52vw, 28rem)");
+    height: unquote("min(52vw, 28rem)");
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, rgba(138, 180, 248, 0.35) 0%, rgba(138, 180, 248, 0) 68%);
+    pointer-events: none;
+}
+
+.o_so_hero_text {
+    position: relative;
+    z-index: 1;
+}
+
+.o_so_eyebrow {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $o-pastel-blue-deep;
+    margin: 0 0 0.35rem;
+}
+
+.o_so_title {
+    font-size: unquote("clamp(1.5rem, 2.5vw, 1.85rem)");
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0;
+    color: $o-text;
+    line-height: 1.15;
+}
+
+.o_so_sub {
+    margin: 0.5rem 0 0;
+    font-size: 0.95rem;
+    color: $o-text-muted;
+
+    .o_so_dot {
+        margin: 0 0.35rem;
+        opacity: 0.5;
+    }
+}
+
+.o_so_content {
+    padding: 1.75rem 2.25rem 2.75rem;
+}
+
+.o_so_section {
+    margin-bottom: 2.25rem;
+
+    &:last-of-type {
+        margin-bottom: 0;
+    }
+}
+
+.o_so_section_head {
+    margin-bottom: 1.15rem;
+}
+
+.o_so_section_title {
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: $o-text;
+    margin: 0 0 0.25rem;
+}
+
+.o_so_section_desc {
+    margin: 0;
+    font-size: 0.875rem;
+    color: $o-text-muted;
+    line-height: 1.4;
+}
+
+.o_so_empty_sales {
+    padding: 2rem;
+    text-align: center;
+}
+
+.o_so_kpi_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (min-width: 1200px) {
+    .o_so_kpi_grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+.o_so_kpi {
+    position: relative;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(8px);
+    border-radius: 18px;
+    padding: 1.2rem 1.25rem 1.15rem;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 4px 24px rgba(61, 99, 140, 0.06);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 1rem;
+        right: 1rem;
+        height: 3px;
+        border-radius: 0 0 4px 4px;
+        background: linear-gradient(90deg, $o-pastel-blue-mid, $o-pastel-blue);
+        opacity: 0.85;
+    }
+
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 40px rgba(61, 99, 140, 0.1);
+        border-color: rgba(138, 180, 248, 0.28);
+    }
+
+    &.o_so_kpi_highlight {
+        border-color: rgba(138, 180, 248, 0.38);
+        background: linear-gradient(165deg, rgba(255, 255, 255, 0.95) 0%, $o-pastel-blue-mist 100%);
+
+        &::before {
+            background: linear-gradient(90deg, $o-pastel-blue-deep, $o-pastel-blue-mid);
+            opacity: 1;
+        }
+    }
+}
+
+.o_so_kpi_top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.65rem;
+}
+
+.o_so_kpi_label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: $o-text-muted;
+}
+
+.o_so_kpi_ico {
+    width: 2.1rem;
+    height: 2.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(138, 180, 248, 0.18);
+    color: $o-pastel-blue-deep;
+    font-size: 0.95rem;
+}
+
+.o_so_kpi_value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0;
+    color: $o-text;
+    line-height: 1.2;
+}
+
+.o_so_kpi_subval {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.o_so_kpi_foot {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.75rem;
+}
+
+.o_so_kpi_foot_stack {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+
+.o_so_kpi_hint {
+    font-size: 0.75rem;
+    color: $o-text-muted;
+}
+
+.o_so_margin {
+    font-size: 0.78rem;
+    color: $o-text-muted;
+
+    strong {
+        color: $o-pastel-blue-deep;
+    }
+}
+
+.o_so_pill {
+    display: inline-block;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.o_so_pill_up {
+    background: $o-pastel-blue-ice;
+    color: $o-pastel-blue-deep;
+    border: 1px solid rgba(138, 180, 248, 0.4);
+}
+
+.o_so_pill_down {
+    background: $o-danger-soft;
+    color: darken($o-danger, 10%);
+    border: 1px solid rgba(232, 93, 106, 0.35);
+}
+
+.o_so_pill_neutral {
+    background: #f1f5f9;
+    color: $o-text-muted;
+    border: 1px solid #e2e8f0;
+}
+
+.o_so_panel {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04), 0 20px 48px rgba(61, 99, 140, 0.07);
+    padding: 1.2rem 1.35rem 1.4rem;
+}
+
+.o_so_panel_head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.o_so_panel_title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.02em;
+    color: $o-text;
+}
+
+.o_so_panel_badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $o-pastel-blue-deep;
+    background: $o-pastel-blue-ice;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+}
+
+.o_so_chart {
+    position: relative;
+    height: 300px;
+}
+
+.o_so_chart_donut {
+    height: 300px;
+}
+
+.o_so_chart_empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 240px;
+    color: $o-text-muted;
+    font-size: 0.9rem;
+}
+
+.o_so_table {
+    --bs-table-bg: transparent;
+    --bs-table-color: #{$o-text};
+    --bs-table-border-color: #eef2f7;
+
+    td {
+        vertical-align: middle;
+        padding: 0.65rem 0.5rem;
+        border-color: #eef2f7;
+    }
+
+    tr:first-child td {
+        border-top: none;
+    }
+}
+
+.o_so_rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: $o-pastel-blue-deep;
+    background: $o-pastel-blue-mist;
+    margin-right: 0.65rem;
+}
+
+.o_so_cell_main {
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: block;
+}
+
+.o_so_cell_sub {
+    display: block;
+    font-size: 0.75rem;
+    margin-top: 0.1rem;
+}
+
+.o_so_table_empty {
+    padding: 1rem 0 0;
+    font-size: 0.875rem;
+}
+
+.o_so_disclaimer {
+    margin: 2rem 0 0;
+    font-size: 0.75rem;
+    color: $o-text-muted;
+    max-width: 52rem;
+    line-height: 1.45;
+}
