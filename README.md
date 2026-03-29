@@ -2,6 +2,8 @@
 
 Native **Odoo 19** client application delivering **Sales** and **Purchase** executive overviews: KPIs, period analysis, trend and mix charts, ranked lists, and an in-app navigation shell built with **OWL** and **Chart.js**.
 
+![Sales overview — key metrics, revenue trend, category mix, and top performers](static/description/sales_overview_screenshot.png)
+
 ---
 
 ## Capabilities
