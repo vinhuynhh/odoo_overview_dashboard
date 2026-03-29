@@ -48,42 +48,39 @@ const DONUT_PALETTE = [
     "rgba(70, 130, 210, 0.85)",
 ];
 
-function emptyDashboardData() {
+function emptyPurchaseDashboardData() {
     return {
         meta: {
             period_label: "",
             period: "month",
             currency_id: null,
             currency_symbol: "",
-            has_sales_access: false,
+            has_purchase_access: false,
             disclaimer: "",
         },
         kpis: {
-            net_revenue: 0,
-            net_revenue_delta_pct: 0,
-            gross_profit: 0,
-            gross_profit_delta_pct: 0,
-            margin_pct: 0,
-            orders_count: 0,
-            orders_delta_pct: 0,
+            purchased_spend: 0,
+            purchased_spend_delta_pct: 0,
+            open_rfq_count: 0,
+            open_rfq_value: 0,
+            po_count: 0,
+            po_delta_pct: 0,
             aov: 0,
-            quotations_count: 0,
-            quotations_value: 0,
+            vendors_count: 0,
         },
         monthly_trend: {
             labels: [],
-            revenue: [],
-            gross_profit: [],
-            target_revenue: [],
+            spend: [],
+            target_spend: [],
         },
-        revenue_by_category: [],
-        top_sellers: [],
-        top_customers: [],
+        spend_by_category: [],
+        top_products: [],
+        top_vendors: [],
     };
 }
 
-function normalizeDashboardPayload(raw) {
-    const base = emptyDashboardData();
+function normalizePurchasePayload(raw) {
+    const base = emptyPurchaseDashboardData();
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
         return base;
     }
@@ -94,33 +91,31 @@ function normalizeDashboardPayload(raw) {
         meta: { ...base.meta, ...(raw.meta || {}) },
         kpis: { ...base.kpis, ...(raw.kpis || {}) },
         monthly_trend: mt,
-        revenue_by_category: Array.isArray(raw.revenue_by_category)
-            ? raw.revenue_by_category
-            : base.revenue_by_category,
-        top_sellers: Array.isArray(raw.top_sellers) ? raw.top_sellers : base.top_sellers,
-        top_customers: Array.isArray(raw.top_customers)
-            ? raw.top_customers
-            : base.top_customers,
+        spend_by_category: Array.isArray(raw.spend_by_category)
+            ? raw.spend_by_category
+            : base.spend_by_category,
+        top_products: Array.isArray(raw.top_products) ? raw.top_products : base.top_products,
+        top_vendors: Array.isArray(raw.top_vendors) ? raw.top_vendors : base.top_vendors,
     };
 }
 
-export class SalesOverviewDashboard extends Component {
-    static template = "odoo_overview_dashboard.SalesOverviewDashboard";
+export class PurchaseOverviewDashboard extends Component {
+    static template = "odoo_overview_dashboard.PurchaseOverviewDashboard";
 
     setup() {
         this.menuService = useService("menu");
         this.actionService = useService("action");
 
-        this.monthlyCanvasRef = useRef("monthlyCanvas");
+        this.spendCanvasRef = useRef("spendCanvas");
         this.donutCanvasRef = useRef("donutCanvas");
 
-        this.monthlyChart = null;
+        this.spendChart = null;
         this.donutChart = null;
 
         this.state = useState({
             loading: true,
             error: null,
-            data: emptyDashboardData(),
+            data: emptyPurchaseDashboardData(),
             sidebarCollapsed: browser.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1",
             period: "month",
             /** Bumped when the action stack updates so the nav highlight (non-reactive service) re-renders. */
@@ -169,16 +164,16 @@ export class SalesOverviewDashboard extends Component {
         this.state.loading = true;
         this.state.error = null;
         try {
-            const result = await rpc("/odoo_overview_dashboard/sales/data", {
+            const result = await rpc("/odoo_overview_dashboard/purchase/data", {
                 period: this.state.period,
             });
             if (result?.error) {
                 this.state.error = result.error;
             } else {
-                this.state.data = normalizeDashboardPayload(result);
+                this.state.data = normalizePurchasePayload(result);
             }
         } catch {
-            this.state.error = "Failed to load sales overview";
+            this.state.error = "Failed to load purchase overview";
         } finally {
             this.state.loading = false;
         }
@@ -262,14 +257,13 @@ export class SalesOverviewDashboard extends Component {
 
     navIconClass(nav) {
         const x = (nav.xmlid || "").toLowerCase();
+        if (x.includes("sales_overview")) {
+            return "fa-tachometer";
+        }
         if (x.includes("purchase_overview")) {
             return "fa-shopping-basket";
         }
-        if (
-            x.includes("sales_overview") ||
-            x.includes("business") ||
-            x.includes("dashboard")
-        ) {
+        if (x.includes("business") || x.includes("dashboard")) {
             return "fa-tachometer";
         }
         if (x.includes("purchase")) {
@@ -304,6 +298,7 @@ export class SalesOverviewDashboard extends Component {
         return "o_so_pill o_so_pill_neutral";
     }
 
+    /** For purchase spend, higher is often neutral-to-positive for ops — keep same color semantics as sales. */
     formatMoney(value) {
         return formatMonetary(value ?? 0, { currencyId: this.currencyId });
     }
@@ -349,15 +344,15 @@ export class SalesOverviewDashboard extends Component {
         const trend = data.monthly_trend;
         const axis = this._axisTheme();
 
-        if (this.monthlyCanvasRef.el) {
-            this.monthlyChart = new Chart(this.monthlyCanvasRef.el, {
+        if (this.spendCanvasRef.el) {
+            this.spendChart = new Chart(this.spendCanvasRef.el, {
                 type: "line",
                 data: {
                     labels: trend.labels,
                     datasets: [
                         {
-                            label: _t("Net revenue"),
-                            data: trend.revenue,
+                            label: _t("Purchased spend"),
+                            data: trend.spend || [],
                             borderColor: CHART_COLORS.pastelBlueDeep,
                             backgroundColor: "rgba(88, 134, 220, 0.12)",
                             fill: true,
@@ -367,18 +362,8 @@ export class SalesOverviewDashboard extends Component {
                             borderWidth: 2,
                         },
                         {
-                            label: _t("Gross profit"),
-                            data: trend.gross_profit,
-                            borderColor: CHART_COLORS.pastelBlueMid,
-                            backgroundColor: "transparent",
-                            fill: false,
-                            tension: 0.4,
-                            pointRadius: 3,
-                            borderWidth: 2,
-                        },
-                        {
                             label: _t("Target (avg +5%)"),
-                            data: trend.target_revenue || [],
+                            data: trend.target_spend || [],
                             borderColor: CHART_COLORS.greyLine,
                             backgroundColor: "transparent",
                             borderDash: [6, 4],
@@ -401,7 +386,7 @@ export class SalesOverviewDashboard extends Component {
             });
         }
 
-        const mix = data.revenue_by_category || [];
+        const mix = data.spend_by_category || [];
         if (this.donutCanvasRef.el && mix.length) {
             this.donutChart = new Chart(this.donutCanvasRef.el, {
                 type: "doughnut",
@@ -431,15 +416,15 @@ export class SalesOverviewDashboard extends Component {
     }
 
     _destroyCharts() {
-        for (const ch of [this.monthlyChart, this.donutChart]) {
+        for (const ch of [this.spendChart, this.donutChart]) {
             if (ch) {
                 ch.destroy();
             }
         }
-        this.monthlyChart = this.donutChart = null;
+        this.spendChart = this.donutChart = null;
     }
 }
 
 registry
     .category("actions")
-    .add("odoo_overview_dashboard.sales_overview_action", SalesOverviewDashboard);
+    .add("odoo_overview_dashboard.purchase_overview_action", PurchaseOverviewDashboard);

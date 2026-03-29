@@ -3,7 +3,7 @@ from odoo.http import request
 
 
 class SalesOverviewController(http.Controller):
-    @http.route("/odoo_overview_dashboard/sales/data", type="json", auth="user")
+    @http.route("/odoo_overview_dashboard/sales/data", type="jsonrpc", auth="user")
     def sales_overview_data(self, **kwargs):
         if not request.env.user.has_group("sales_team.group_sale_salesman"):
             return {"error": "Access denied"}

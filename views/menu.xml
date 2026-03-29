@@ -16,4 +16,12 @@
         action="action_sales_overview_dashboard"
         sequence="10"
     />
+
+    <menuitem
+        id="menu_purchase_overview_dashboard"
+        name="Purchase overview"
+        parent="menu_overview_root"
+        action="action_purchase_overview_dashboard"
+        sequence="20"
+    />
 </odoo>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <templates xml:space="preserve">
-    <t t-name="odoo_overview_dashboard.SalesOverviewDashboard">
+    <t t-name="odoo_overview_dashboard.PurchaseOverviewDashboard">
         <div class="o_overview_app_layout" t-att-class="{ o_overview_sidebar_collapsed: state.sidebarCollapsed }">
             <aside class="o_overview_sidebar" aria-label="Overview navigation">
                 <div class="o_overview_sidebar_header">
@@ -62,8 +62,8 @@
                             <div class="o_so_hero_text">
                                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                                     <div>
-                                        <p class="o_so_eyebrow">Sales intelligence</p>
-                                        <h1 class="o_so_title">Sales overview</h1>
+                                        <p class="o_so_eyebrow">Procurement</p>
+                                        <h1 class="o_so_title">Purchase overview</h1>
                                         <p class="o_so_sub">
                                             Welcome back<t t-if="sessionUserName">, <strong t-esc="sessionUserName"/></t>
                                             <span class="o_so_dot">·</span>
@@ -82,89 +82,88 @@
                         </header>
 
                         <div class="o_so_content" t-att-class="{ 'o_so_loading_overlay': state.loading }">
-                            <section class="o_so_section" t-if="state.data.meta.has_sales_access">
+                            <section class="o_so_section" t-if="state.data.meta.has_purchase_access">
                                 <div class="o_so_section_head">
                                     <h2 class="o_so_section_title">Key metrics</h2>
-                                    <p class="o_so_section_desc">Performance and pipeline health</p>
+                                    <p class="o_so_section_desc">Confirmed spend and open pipeline</p>
                                 </div>
                                 <div class="o_so_kpi_grid">
                                 <article class="o_so_kpi" style="--animation-order: 1;">
                                     <div class="o_so_kpi_top">
-                                        <span class="o_so_kpi_label">Net revenue</span>
-                                        <i class="fa fa-line-chart o_so_kpi_ico" aria-hidden="true"/>
+                                        <span class="o_so_kpi_label">Purchased spend</span>
+                                        <i class="fa fa-credit-card o_so_kpi_ico" aria-hidden="true"/>
                                     </div>
-                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.net_revenue)" />
+                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.purchased_spend)" />
                                     <div class="o_so_kpi_foot">
-                                        <span t-att-class="deltaPillClass(state.data.kpis.net_revenue_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.net_revenue_delta_pct)" />
+                                        <span t-att-class="deltaPillClass(state.data.kpis.purchased_spend_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.purchased_spend_delta_pct)" />
                                         <span class="o_so_kpi_hint">vs prior period</span>
                                     </div>
                                 </article>
                                 <article class="o_so_kpi" style="--animation-order: 2;">
                                     <div class="o_so_kpi_top">
-                                        <span class="o_so_kpi_label">Gross profit</span>
-                                        <i class="fa fa-money o_so_kpi_ico" aria-hidden="true"/>
+                                        <span class="o_so_kpi_label">Confirmed POs</span>
+                                        <i class="fa fa-file-text-o o_so_kpi_ico" aria-hidden="true"/>
                                     </div>
-                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.gross_profit)" />
-                                    <div class="o_so_kpi_foot o_so_kpi_foot_stack">
-                                        <span class="o_so_margin">Margin <strong t-esc="state.data.kpis.margin_pct"/>%</span>
-                                        <span t-att-class="deltaPillClass(state.data.kpis.gross_profit_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.gross_profit_delta_pct)" />
+                                    <p class="o_so_kpi_value" t-esc="state.data.kpis.po_count" />
+                                    <div class="o_so_kpi_foot">
+                                        <span t-att-class="deltaPillClass(state.data.kpis.po_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.po_delta_pct)" />
+                                        <span class="o_so_kpi_hint">vs prior period</span>
                                     </div>
                                 </article>
                                 <article class="o_so_kpi" style="--animation-order: 3;">
                                     <div class="o_so_kpi_top">
-                                        <span class="o_so_kpi_label">Orders</span>
-                                        <i class="fa fa-file-text-o o_so_kpi_ico" aria-hidden="true"/>
-                                    </div>
-                                    <p class="o_so_kpi_value" t-esc="state.data.kpis.orders_count" />
-                                    <div class="o_so_kpi_foot">
-                                        <span t-att-class="deltaPillClass(state.data.kpis.orders_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.orders_delta_pct)" />
-                                        <span class="o_so_kpi_hint">vs prior period</span>
-                                    </div>
-                                </article>
-                                <article class="o_so_kpi" style="--animation-order: 4;">
-                                    <div class="o_so_kpi_top">
-                                        <span class="o_so_kpi_label">Avg. order value</span>
-                                        <i class="fa fa-shopping-cart o_so_kpi_ico" aria-hidden="true"/>
+                                        <span class="o_so_kpi_label">Avg. PO value</span>
+                                        <i class="fa fa-balance-scale o_so_kpi_ico" aria-hidden="true"/>
                                     </div>
                                     <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.aov)" />
                                     <div class="o_so_kpi_foot">
                                         <span class="o_so_kpi_hint">This period</span>
                                     </div>
                                 </article>
+                                <article class="o_so_kpi" style="--animation-order: 4;">
+                                    <div class="o_so_kpi_top">
+                                        <span class="o_so_kpi_label">Active vendors</span>
+                                        <i class="fa fa-truck o_so_kpi_ico" aria-hidden="true"/>
+                                    </div>
+                                    <p class="o_so_kpi_value" t-esc="state.data.kpis.vendors_count" />
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">With spend this period</span>
+                                    </div>
+                                </article>
                                 <article class="o_so_kpi o_so_kpi_highlight" style="--animation-order: 5;">
                                     <div class="o_so_kpi_top">
-                                        <span class="o_so_kpi_label">Open quotations</span>
+                                        <span class="o_so_kpi_label">Open RFQs</span>
                                         <i class="fa fa-inbox o_so_kpi_ico" aria-hidden="true"/>
                                     </div>
                                     <p class="o_so_kpi_value">
-                                        <t t-esc="state.data.kpis.quotations_count"/>
-                                        <span class="o_so_kpi_subval text-muted"> · <t t-esc="formatMoney(state.data.kpis.quotations_value)"/></span>
+                                        <t t-esc="state.data.kpis.open_rfq_count"/>
+                                        <span class="o_so_kpi_subval text-muted"> · <t t-esc="formatMoney(state.data.kpis.open_rfq_value)"/></span>
                                     </p>
                                     <div class="o_so_kpi_foot">
-                                        <span class="o_so_kpi_hint">Draft &amp; sent</span>
+                                        <span class="o_so_kpi_hint">Draft, sent &amp; to approve</span>
                                     </div>
                                 </article>
                                 </div>
                             </section>
 
-                            <section class="o_so_empty_sales text-muted" t-if="!state.data.meta.has_sales_access">
-                                You need Sales access to view this dashboard.
+                            <section class="o_so_empty_sales text-muted" t-if="!state.data.meta.has_purchase_access">
+                                You need Purchase access to view this dashboard.
                             </section>
 
-                            <section class="o_so_section" t-if="state.data.meta.has_sales_access">
+                            <section class="o_so_section" t-if="state.data.meta.has_purchase_access">
                                 <div class="o_so_section_head">
                                     <h2 class="o_so_section_title">Trends &amp; mix</h2>
-                                    <p class="o_so_section_desc">Revenue trajectory and category contribution</p>
+                                    <p class="o_so_section_desc">Spend trajectory and category share</p>
                                 </div>
                                 <div class="o_so_charts row g-3 mb-0">
                                 <div class="col-12 col-xl-8">
                                     <div class="o_so_panel h-100" style="--animation-order: 6;">
                                         <div class="o_so_panel_head">
-                                            <h3 class="o_so_panel_title">Revenue &amp; gross profit</h3>
+                                            <h3 class="o_so_panel_title">Purchased spend</h3>
                                             <span class="o_so_panel_badge">Trend</span>
                                         </div>
                                         <div class="o_so_chart">
-                                            <canvas t-ref="monthlyCanvas" />
+                                            <canvas t-ref="spendCanvas" />
                                         </div>
                                     </div>
                                 </div>
@@ -175,7 +174,7 @@
                                             <span class="o_so_panel_badge">This period</span>
                                         </div>
                                         <div class="o_so_chart o_so_chart_donut">
-                                            <t t-if="state.data.revenue_by_category.length">
+                                            <t t-if="state.data.spend_by_category.length">
                                                 <canvas t-ref="donutCanvas" />
                                             </t>
                                             <t t-else="">
@@ -187,21 +186,21 @@
                                 </div>
                             </section>
 
-                            <section class="o_so_section" t-if="state.data.meta.has_sales_access">
+                            <section class="o_so_section" t-if="state.data.meta.has_purchase_access">
                                 <div class="o_so_section_head">
                                     <h2 class="o_so_section_title">Top performers</h2>
-                                    <p class="o_so_section_desc">Products and customers by revenue this period</p>
+                                    <p class="o_so_section_desc">Products and vendors by spend this period</p>
                                 </div>
                                 <div class="row g-3">
                                 <div class="col-12 col-lg-6">
                                     <div class="o_so_panel h-100" style="--animation-order: 8;">
                                         <div class="o_so_panel_head">
                                             <h3 class="o_so_panel_title">Top products</h3>
-                                            <span class="o_so_panel_badge">By revenue</span>
+                                            <span class="o_so_panel_badge">By spend</span>
                                         </div>
                                         <table class="o_so_table table mb-0">
                                             <tbody>
-                                                <tr t-foreach="state.data.top_sellers" t-as="s" t-key="s.product_id">
+                                                <tr t-foreach="state.data.top_products" t-as="s" t-key="s.product_id">
                                                     <td><span class="o_so_rank" t-esc="s_index + 1"/></td>
                                                     <td>
                                                         <span class="o_so_cell_main" t-esc="s.name"/>
@@ -211,20 +210,20 @@
                                                 </tr>
                                             </tbody>
                                         </table>
-                                        <t t-if="!state.data.top_sellers.length">
-                                            <p class="o_so_table_empty text-muted mb-0">No sales this period.</p>
+                                        <t t-if="!state.data.top_products.length">
+                                            <p class="o_so_table_empty text-muted mb-0">No purchases this period.</p>
                                         </t>
                                     </div>
                                 </div>
                                 <div class="col-12 col-lg-6">
                                     <div class="o_so_panel h-100" style="--animation-order: 9;">
                                         <div class="o_so_panel_head">
-                                            <h3 class="o_so_panel_title">Top customers</h3>
+                                            <h3 class="o_so_panel_title">Top vendors</h3>
                                             <span class="o_so_panel_badge">This period</span>
                                         </div>
                                         <table class="o_so_table table mb-0">
                                             <tbody>
-                                                <tr t-foreach="state.data.top_customers" t-as="c" t-key="c.partner_id">
+                                                <tr t-foreach="state.data.top_vendors" t-as="c" t-key="c.partner_id">
                                                     <td><span class="o_so_rank" t-esc="c_index + 1"/></td>
                                                     <td>
                                                         <span class="o_so_cell_main" t-esc="c.name"/>
@@ -233,8 +232,8 @@
                                                 </tr>
                                             </tbody>
                                         </table>
-                                        <t t-if="!state.data.top_customers.length">
-                                            <p class="o_so_table_empty text-muted mb-0">No customers this period.</p>
+                                        <t t-if="!state.data.top_vendors.length">
+                                            <p class="o_so_table_empty text-muted mb-0">No vendors this period.</p>
                                         </t>
                                     </div>
                                 </div>

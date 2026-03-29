@@ -6,16 +6,19 @@
     "author": "DLHM",
     "license": "LGPL-3",
     "sequence": 1,
-    "depends": ["base", "web", "sale_management"],
+    "depends": ["base", "web", "sale_management", "purchase"],
     "data": [
         "security/ir.model.access.csv",
         "views/sales_overview_action.xml",
+        "views/purchase_overview_action.xml",
         "views/menu.xml",
     ],
     "assets": {
         "web.assets_backend": [
             "odoo_overview_dashboard/static/src/js/sales_overview.js",
+            "odoo_overview_dashboard/static/src/js/purchase_overview.js",
             "odoo_overview_dashboard/static/src/xml/sales_overview.xml",
+            "odoo_overview_dashboard/static/src/xml/purchase_overview.xml",
             "odoo_overview_dashboard/static/src/scss/sales_overview.scss",
         ],
     },
