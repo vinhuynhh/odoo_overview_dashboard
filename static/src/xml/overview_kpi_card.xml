@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.OverviewKpiCard">
+        <article
+            class="o_so_kpi"
+            t-att-class="{ o_so_kpi_highlight: props.highlight }"
+            t-att-style="'--animation-order: ' + props.animationOrder + ';'"
+        >
+            <div class="o_so_kpi_top">
+                <div class="o_so_kpi_label_row">
+                    <span class="o_so_kpi_label" t-out="props.label"/>
+                    <button
+                        t-if="props.helpText"
+                        type="button"
+                        class="o_so_kpi_help_hit"
+                        data-tooltip-delay="0"
+                        t-att-aria-label="props.helpText"
+                        t-att-data-tooltip="props.helpText"
+                    >
+                        <i class="fa fa-info-circle o_so_kpi_help" aria-hidden="true"/>
+                    </button>
+                </div>
+                <i t-att-class="'fa ' + props.iconClass + ' o_so_kpi_ico'" aria-hidden="true"/>
+            </div>
+            <t t-slot="value"/>
+            <t t-slot="footer"/>
+        </article>
+    </t>
+</templates>

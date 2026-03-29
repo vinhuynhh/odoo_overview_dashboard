@@ -2,6 +2,7 @@
 <odoo>
     <record id="action_sales_overview_dashboard" model="ir.actions.client">
         <field name="name">Sales overview</field>
-        <field name="tag">odoo_overview_dashboard.sales_overview_action</field>
+        <field name="tag">odoo_overview_dashboard.overview_shell_action</field>
+        <field name="params" eval="{'view': 'sales'}"/>
     </record>
 </odoo>

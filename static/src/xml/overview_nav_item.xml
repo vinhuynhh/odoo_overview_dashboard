@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.OverviewNavItem">
+        <button
+            type="button"
+            class="o_overview_nav_btn"
+            t-att-class="{ o_active: props.active }"
+            t-att-title="props.title || props.label"
+            t-on-click="() => props.onSelect()"
+        >
+            <i t-att-class="'fa ' + props.iconClass + ' o_overview_nav_icon'" aria-hidden="true"/>
+            <span class="o_overview_nav_label" t-esc="props.label"/>
+        </button>
+    </t>
+</templates>

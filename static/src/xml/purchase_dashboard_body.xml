@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.PurchaseDashboardBody">
+        <div class="o_so_dashboard">
+            <t t-if="state.loading and !state.data.meta.period_label">
+                <OverviewDashboardSkeleton/>
+            </t>
+            <t t-elif="state.error">
+                <div class="o_so_error" t-esc="state.error"/>
+            </t>
+            <t t-else="">
+                <OverviewDashboardHero t-props="heroProps"/>
+                <div class="o_so_content" t-att-class="{ 'o_so_loading_overlay': state.loading }">
+                    <section class="o_so_section" t-if="state.data.meta.has_purchase_access">
+                        <OverviewSectionHeader t-props="sectionKeyMetricsProps"/>
+                        <div class="o_so_kpi_grid">
+                            <OverviewKpiCard label="'Purchased spend'" iconClass="'fa-credit-card'" animationOrder="1" helpText="kpiHelp.purchasedSpend">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.purchased_spend)"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot" t-if="showPeriodComparison">
+                                        <span t-att-class="deltaPillClass(state.data.kpis.purchased_spend_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.purchased_spend_delta_pct)"/>
+                                        <span class="o_so_kpi_hint">vs prior period</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Confirmed POs'" iconClass="'fa-file-text-o'" animationOrder="2" helpText="kpiHelp.confirmedPos">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="state.data.kpis.po_count"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot" t-if="showPeriodComparison">
+                                        <span t-att-class="deltaPillClass(state.data.kpis.po_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.po_delta_pct)"/>
+                                        <span class="o_so_kpi_hint">vs prior period</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Avg. PO value'" iconClass="'fa-balance-scale'" animationOrder="3" helpText="kpiHelp.avgPoValue">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.aov)"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">This period</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Active vendors'" iconClass="'fa-truck'" animationOrder="4" helpText="kpiHelp.activeVendors">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="state.data.kpis.vendors_count"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">With spend this period</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Open RFQs'" iconClass="'fa-inbox'" animationOrder="5" highlight="true" helpText="kpiHelp.openRfqs">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value">
+                                        <t t-esc="state.data.kpis.open_rfq_count"/>
+                                        <span class="o_so_kpi_subval text-muted"> · <t t-esc="formatMoney(state.data.kpis.open_rfq_value)"/></span>
+                                    </p>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">Draft, sent &amp; to approve</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                        </div>
+                    </section>
+
+                    <section class="o_so_empty_sales text-muted" t-if="!state.data.meta.has_purchase_access">
+                        You need Purchase access to view this dashboard.
+                    </section>
+
+                    <section class="o_so_section" t-if="state.data.meta.has_purchase_access">
+                        <OverviewSectionHeader t-props="sectionTrendsProps"/>
+                        <div class="o_so_charts row g-3 mb-0">
+                            <div class="col-12 col-xl-8">
+                                <OverviewPanel t-props="panelSpendTrendProps">
+                                    <div class="o_so_chart">
+                                        <canvas t-ref="spendCanvas"/>
+                                    </div>
+                                </OverviewPanel>
+                            </div>
+                            <div class="col-12 col-xl-4">
+                                <OverviewPanel t-props="panelMixProps">
+                                    <div class="o_so_chart o_so_chart_donut">
+                                        <t t-if="state.data.spend_by_category.length">
+                                            <canvas t-ref="donutCanvas"/>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="o_so_chart_empty">No category data</div>
+                                        </t>
+                                    </div>
+                                </OverviewPanel>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="o_so_section" t-if="state.data.meta.has_purchase_access">
+                        <OverviewSectionHeader t-props="sectionTopProps"/>
+                        <div class="row g-3">
+                            <div class="col-12 col-lg-6">
+                                <OverviewPanel t-props="panelTopProductsProps">
+                                    <OverviewRankedTable t-props="rankedProductsProps"/>
+                                </OverviewPanel>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <OverviewPanel t-props="panelTopVendorsProps">
+                                    <OverviewRankedTable t-props="rankedVendorsProps"/>
+                                </OverviewPanel>
+                            </div>
+                        </div>
+                    </section>
+
+                    <p class="o_so_disclaimer" t-esc="state.data.meta.disclaimer"/>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

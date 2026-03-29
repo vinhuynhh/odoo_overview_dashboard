@@ -3,7 +3,7 @@
     <!-- Root application menu -->
     <menuitem
         id="menu_overview_root"
-        name="Overview"
+        name="Business Overview"
         sequence="1"
         web_icon="odoo_overview_dashboard,static/description/icon.png"
     />
@@ -11,7 +11,7 @@
     <!-- Sales Overview sub-menu -->
     <menuitem
         id="menu_sales_overview_dashboard"
-        name="Sales overview"
+        name="Sales"
         parent="menu_overview_root"
         action="action_sales_overview_dashboard"
         sequence="10"
@@ -19,7 +19,7 @@
 
     <menuitem
         id="menu_purchase_overview_dashboard"
-        name="Purchase overview"
+        name="Purchase"
         parent="menu_overview_root"
         action="action_purchase_overview_dashboard"
         sequence="20"

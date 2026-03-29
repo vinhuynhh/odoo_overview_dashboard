@@ -31,8 +31,7 @@ Disclaimers on screen — align with your policies.
 
 **OWL**
 
-- Sales: `static/src/js/sales_overview.js`, `static/src/xml/sales_overview.xml`
-- Purchase: `static/src/js/purchase_overview.js`, `static/src/xml/purchase_overview.xml`
+- Shell + shared OWL pieces: `static/src/js/overview/` and `static/src/xml/overview_*.xml`, `sales_dashboard_body.xml`, `purchase_dashboard_body.xml`, `overview_shell.xml`
 
 **Styles:** `static/src/scss/sales_overview.scss` (shared look).
 

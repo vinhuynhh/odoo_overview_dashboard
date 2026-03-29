@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.OverviewRankedTable">
+        <table class="o_so_table table mb-0">
+            <tbody>
+                <tr t-foreach="props.rows" t-as="row" t-key="itemKey(row)">
+                    <td><span class="o_so_rank" t-esc="row_index + 1"/></td>
+                    <td>
+                        <span class="o_so_cell_main" t-esc="mainText(row)"/>
+                        <span class="o_so_cell_sub text-muted" t-if="props.subField and subText(row)" t-esc="subText(row)"/>
+                    </td>
+                    <td class="text-end fw-semibold" t-esc="amountText(row)"/>
+                </tr>
+            </tbody>
+        </table>
+        <p class="o_so_table_empty text-muted mb-0" t-if="!props.rows.length" t-esc="props.emptyMessage"/>
+    </t>
+</templates>

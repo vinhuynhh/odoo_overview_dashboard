@@ -1,8 +1,8 @@
 from collections import defaultdict
 
-from dateutil.relativedelta import relativedelta
-
 from odoo import api, fields, models
+
+from .overview_period import resolve_custom_overview_period, resolve_overview_period
 
 
 class SalesOverviewService(models.AbstractModel):
@@ -45,35 +45,27 @@ class SalesOverviewService(models.AbstractModel):
         return total
 
     @api.model
-    def get_sales_overview_data(self, period="month"):
+    def get_sales_overview_data(self, period="month", date_from=None, date_to=None):
         company = self.env.company
         today = fields.Date.context_today(self)
 
-        if period == "year":
-            current_start = today.replace(month=1, day=1)
-            current_end = current_start + relativedelta(years=1)
-            prev_start = current_start - relativedelta(years=1)
-            prev_end = current_start
-            period_label = today.strftime("%Y")
-            trend_steps = 5
-            trend_delta = relativedelta(years=1)
-        elif period == "quarter":
-            q_month = ((today.month - 1) // 3) * 3 + 1
-            current_start = today.replace(month=q_month, day=1)
-            current_end = current_start + relativedelta(months=3)
-            prev_start = current_start - relativedelta(months=3)
-            prev_end = current_start
-            period_label = f"Q{(today.month - 1) // 3 + 1} {today.year}"
-            trend_steps = 4
-            trend_delta = relativedelta(months=3)
+        period_key = (period or "month").strip().lower()
+        if period_key == "custom":
+            try:
+                win = resolve_custom_overview_period(date_from, date_to)
+            except ValueError as err:
+                return {"error": str(err)}
         else:
-            current_start = today.replace(day=1)
-            current_end = current_start + relativedelta(months=1)
-            prev_start = current_start - relativedelta(months=1)
-            prev_end = current_start
-            period_label = today.strftime("%B %Y")
-            trend_steps = 6
-            trend_delta = relativedelta(months=1)
+            win = resolve_overview_period(period_key, today)
+        period = win["period"]
+        current_start = win["current_start"]
+        current_end = win["current_end"]
+        prev_start = win["prev_start"]
+        prev_end = win["prev_end"]
+        period_label = win["period_label"]
+        trend_labels = win["trend_labels"]
+        trend_segments = win["trend_segments"]
+        compare_previous = win.get("compare_previous", True)
 
         user = self.env.user
         has_sales = user.has_group("sales_team.group_sale_salesman")
@@ -85,27 +77,17 @@ class SalesOverviewService(models.AbstractModel):
             "currency_id": currency.id,
             "currency_symbol": currency.symbol or currency.name,
             "has_sales_access": has_sales,
+            "compare_previous": compare_previous,
             "disclaimer": (
                 "Net revenue is untaxed sales total. Gross profit uses product "
                 "standard price as cost — align with your accounting policy."
             ),
         }
 
-        trend_labels = []
         trend_revenue = []
         trend_profit = []
 
-        for i in range(trend_steps - 1, -1, -1):
-            p_start = current_start - (trend_delta * i)
-            p_end = p_start + trend_delta
-            
-            if period == "year":
-                trend_labels.append(p_start.strftime("%Y"))
-            elif period == "quarter":
-                trend_labels.append(f"Q{(p_start.month - 1) // 3 + 1} '{p_start.strftime('%y')}")
-            else:
-                trend_labels.append(p_start.strftime("%b"))
-
+        for p_start, p_end in trend_segments:
             if has_sales:
                 orders_p = self._orders_in_period(company, p_start, p_end)
                 trend_revenue.append(self._sum_untaxed(orders_p))
@@ -116,24 +98,38 @@ class SalesOverviewService(models.AbstractModel):
 
         if has_sales:
             current_orders = self._orders_in_period(company, current_start, current_end)
-            prev_orders = self._orders_in_period(company, prev_start, prev_end)
+            prev_orders = (
+                self._orders_in_period(company, prev_start, prev_end)
+                if compare_previous
+                else self.env["sale.order"]
+            )
         else:
             current_orders = self.env["sale.order"]
             prev_orders = self.env["sale.order"]
 
         revenue_m = self._sum_untaxed(current_orders) if has_sales else 0.0
-        revenue_prev = self._sum_untaxed(prev_orders) if has_sales else 0.0
+        revenue_prev = (
+            self._sum_untaxed(prev_orders)
+            if (has_sales and compare_previous)
+            else 0.0
+        )
         profit_m = self._gross_profit_from_orders(current_orders) if has_sales else 0.0
-        profit_prev = self._gross_profit_from_orders(prev_orders) if has_sales else 0.0
+        profit_prev = (
+            self._gross_profit_from_orders(prev_orders)
+            if (has_sales and compare_previous)
+            else 0.0
+        )
         
         margin_pct = round((profit_m / revenue_m * 100), 1) if revenue_m else 0.0
         orders_count = len(current_orders) if has_sales else 0
-        orders_prev = len(prev_orders) if has_sales else 0
+        orders_prev = len(prev_orders) if (has_sales and compare_previous) else 0
 
         aov = round(revenue_m / orders_count, 2) if orders_count else 0.0
 
         avg_rev = sum(trend_revenue) / len(trend_revenue) if trend_revenue else 0.0
-        target_line = [round(avg_rev * 1.05, 2)] * trend_steps if trend_revenue else []
+        target_line = (
+            [round(avg_rev * 1.05, 2)] * len(trend_revenue) if trend_revenue else []
+        )
 
         # Open quotations (pipeline)
         quotations_count = 0
@@ -217,18 +213,32 @@ class SalesOverviewService(models.AbstractModel):
                     }
                 )
 
-        kpis = {
-            "net_revenue": round(revenue_m, 2),
-            "net_revenue_delta_pct": self._pct_change(revenue_m, revenue_prev),
-            "gross_profit": round(profit_m, 2),
-            "gross_profit_delta_pct": self._pct_change(profit_m, profit_prev),
-            "margin_pct": margin_pct,
-            "orders_count": orders_count,
-            "orders_delta_pct": self._pct_change(orders_count, orders_prev),
-            "aov": aov,
-            "quotations_count": quotations_count,
-            "quotations_value": round(quotations_value, 2),
-        }
+        if compare_previous:
+            kpis = {
+                "net_revenue": round(revenue_m, 2),
+                "net_revenue_delta_pct": self._pct_change(revenue_m, revenue_prev),
+                "gross_profit": round(profit_m, 2),
+                "gross_profit_delta_pct": self._pct_change(profit_m, profit_prev),
+                "margin_pct": margin_pct,
+                "orders_count": orders_count,
+                "orders_delta_pct": self._pct_change(orders_count, orders_prev),
+                "aov": aov,
+                "quotations_count": quotations_count,
+                "quotations_value": round(quotations_value, 2),
+            }
+        else:
+            kpis = {
+                "net_revenue": round(revenue_m, 2),
+                "net_revenue_delta_pct": None,
+                "gross_profit": round(profit_m, 2),
+                "gross_profit_delta_pct": None,
+                "margin_pct": margin_pct,
+                "orders_count": orders_count,
+                "orders_delta_pct": None,
+                "aov": aov,
+                "quotations_count": quotations_count,
+                "quotations_value": round(quotations_value, 2),
+            }
 
         return {
             "meta": meta,

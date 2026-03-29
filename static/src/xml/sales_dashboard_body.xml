@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.SalesDashboardBody">
+        <div class="o_so_dashboard">
+            <t t-if="state.loading and !state.data.meta.period_label">
+                <OverviewDashboardSkeleton/>
+            </t>
+            <t t-elif="state.error">
+                <div class="o_so_error" t-esc="state.error"/>
+            </t>
+            <t t-else="">
+                <OverviewDashboardHero t-props="heroProps"/>
+                <div class="o_so_content" t-att-class="{ 'o_so_loading_overlay': state.loading }">
+                    <section class="o_so_section" t-if="state.data.meta.has_sales_access">
+                        <OverviewSectionHeader t-props="sectionKeyMetricsProps"/>
+                        <div class="o_so_kpi_grid">
+                            <OverviewKpiCard label="'Net revenue'" iconClass="'fa-line-chart'" animationOrder="1" helpText="kpiHelp.netRevenue">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.net_revenue)"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot" t-if="showPeriodComparison">
+                                        <span t-att-class="deltaPillClass(state.data.kpis.net_revenue_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.net_revenue_delta_pct)"/>
+                                        <span class="o_so_kpi_hint">vs prior period</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Gross profit'" iconClass="'fa-money'" animationOrder="2" helpText="kpiHelp.grossProfit">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.gross_profit)"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot o_so_kpi_foot_stack">
+                                        <span class="o_so_margin">Margin <strong t-esc="state.data.kpis.margin_pct"/>%</span>
+                                        <span t-if="showPeriodComparison" t-att-class="deltaPillClass(state.data.kpis.gross_profit_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.gross_profit_delta_pct)"/>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Orders'" iconClass="'fa-file-text-o'" animationOrder="3" helpText="kpiHelp.orders">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="state.data.kpis.orders_count"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot" t-if="showPeriodComparison">
+                                        <span t-att-class="deltaPillClass(state.data.kpis.orders_delta_pct)" t-esc="formatDeltaPct(state.data.kpis.orders_delta_pct)"/>
+                                        <span class="o_so_kpi_hint">vs prior period</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Avg. order value'" iconClass="'fa-shopping-cart'" animationOrder="4" helpText="kpiHelp.aov">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.aov)"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">This period</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Open quotations'" iconClass="'fa-inbox'" animationOrder="5" highlight="true" helpText="kpiHelp.openQuotations">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value">
+                                        <t t-esc="state.data.kpis.quotations_count"/>
+                                        <span class="o_so_kpi_subval text-muted"> · <t t-esc="formatMoney(state.data.kpis.quotations_value)"/></span>
+                                    </p>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">Draft &amp; sent</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                        </div>
+                    </section>
+
+                    <section class="o_so_empty_sales text-muted" t-if="!state.data.meta.has_sales_access">
+                        You need Sales access to view this dashboard.
+                    </section>
+
+                    <section class="o_so_section" t-if="state.data.meta.has_sales_access">
+                        <OverviewSectionHeader t-props="sectionTrendsProps"/>
+                        <div class="o_so_charts row g-3 mb-0">
+                            <div class="col-12 col-xl-8">
+                                <OverviewPanel t-props="panelRevenueTrendProps">
+                                    <div class="o_so_chart">
+                                        <canvas t-ref="monthlyCanvas"/>
+                                    </div>
+                                </OverviewPanel>
+                            </div>
+                            <div class="col-12 col-xl-4">
+                                <OverviewPanel t-props="panelMixProps">
+                                    <div class="o_so_chart o_so_chart_donut">
+                                        <t t-if="state.data.revenue_by_category.length">
+                                            <canvas t-ref="donutCanvas"/>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="o_so_chart_empty">No category data</div>
+                                        </t>
+                                    </div>
+                                </OverviewPanel>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="o_so_section" t-if="state.data.meta.has_sales_access">
+                        <OverviewSectionHeader t-props="sectionTopProps"/>
+                        <div class="row g-3">
+                            <div class="col-12 col-lg-6">
+                                <OverviewPanel t-props="panelTopProductsProps">
+                                    <OverviewRankedTable t-props="rankedSellersProps"/>
+                                </OverviewPanel>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <OverviewPanel t-props="panelTopCustomersProps">
+                                    <OverviewRankedTable t-props="rankedCustomersProps"/>
+                                </OverviewPanel>
+                            </div>
+                        </div>
+                    </section>
+
+                    <p class="o_so_disclaimer" t-esc="state.data.meta.disclaimer"/>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

@@ -8,4 +8,8 @@ class SalesOverviewController(http.Controller):
         if not request.env.user.has_group("sales_team.group_sale_salesman"):
             return {"error": "Access denied"}
         period = kwargs.get("period", "month")
-        return request.env["odoo.overview.sales.service"].get_sales_overview_data(period=period)
+        return request.env["odoo.overview.sales.service"].get_sales_overview_data(
+            period=period,
+            date_from=kwargs.get("date_from"),
+            date_to=kwargs.get("date_to"),
+        )

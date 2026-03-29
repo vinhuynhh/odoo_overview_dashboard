@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.OverviewSectionHeader">
+        <div class="o_so_section_head">
+            <h2 class="o_so_section_title" t-esc="props.title"/>
+            <p class="o_so_section_desc" t-if="props.description" t-esc="props.description"/>
+        </div>
+    </t>
+</templates>

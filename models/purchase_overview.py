@@ -1,8 +1,8 @@
 from collections import defaultdict
 
-from dateutil.relativedelta import relativedelta
-
 from odoo import api, fields, models
+
+from .overview_period import resolve_custom_overview_period, resolve_overview_period
 
 
 class PurchaseOverviewService(models.AbstractModel):
@@ -28,35 +28,27 @@ class PurchaseOverviewService(models.AbstractModel):
         return sum(orders.mapped("amount_untaxed"))
 
     @api.model
-    def get_purchase_overview_data(self, period="month"):
+    def get_purchase_overview_data(self, period="month", date_from=None, date_to=None):
         company = self.env.company
         today = fields.Date.context_today(self)
 
-        if period == "year":
-            current_start = today.replace(month=1, day=1)
-            current_end = current_start + relativedelta(years=1)
-            prev_start = current_start - relativedelta(years=1)
-            prev_end = current_start
-            period_label = today.strftime("%Y")
-            trend_steps = 5
-            trend_delta = relativedelta(years=1)
-        elif period == "quarter":
-            q_month = ((today.month - 1) // 3) * 3 + 1
-            current_start = today.replace(month=q_month, day=1)
-            current_end = current_start + relativedelta(months=3)
-            prev_start = current_start - relativedelta(months=3)
-            prev_end = current_start
-            period_label = f"Q{(today.month - 1) // 3 + 1} {today.year}"
-            trend_steps = 4
-            trend_delta = relativedelta(months=3)
+        period_key = (period or "month").strip().lower()
+        if period_key == "custom":
+            try:
+                win = resolve_custom_overview_period(date_from, date_to)
+            except ValueError as err:
+                return {"error": str(err)}
         else:
-            current_start = today.replace(day=1)
-            current_end = current_start + relativedelta(months=1)
-            prev_start = current_start - relativedelta(months=1)
-            prev_end = current_start
-            period_label = today.strftime("%B %Y")
-            trend_steps = 6
-            trend_delta = relativedelta(months=1)
+            win = resolve_overview_period(period_key, today)
+        period = win["period"]
+        current_start = win["current_start"]
+        current_end = win["current_end"]
+        prev_start = win["prev_start"]
+        prev_end = win["prev_end"]
+        period_label = win["period_label"]
+        trend_labels = win["trend_labels"]
+        trend_segments = win["trend_segments"]
+        compare_previous = win.get("compare_previous", True)
 
         user = self.env.user
         has_purchase = user.has_group("purchase.group_purchase_user")
@@ -68,6 +60,7 @@ class PurchaseOverviewService(models.AbstractModel):
             "currency_id": currency.id,
             "currency_symbol": currency.symbol or currency.name,
             "has_purchase_access": has_purchase,
+            "compare_previous": compare_previous,
             "disclaimer": (
                 "Purchased spend is untaxed total on confirmed purchase orders (state Purchase "
                 "Order) in the selected period. Open pipeline includes RFQs (draft, sent, to approve) "
@@ -75,22 +68,9 @@ class PurchaseOverviewService(models.AbstractModel):
             ),
         }
 
-        trend_labels = []
         trend_spend = []
 
-        for i in range(trend_steps - 1, -1, -1):
-            p_start = current_start - (trend_delta * i)
-            p_end = p_start + trend_delta
-
-            if period == "year":
-                trend_labels.append(p_start.strftime("%Y"))
-            elif period == "quarter":
-                trend_labels.append(
-                    f"Q{(p_start.month - 1) // 3 + 1} '{p_start.strftime('%y')}"
-                )
-            else:
-                trend_labels.append(p_start.strftime("%b"))
-
+        for p_start, p_end in trend_segments:
             if has_purchase:
                 pos_p = self._confirmed_pos_in_period(company, p_start, p_end)
                 trend_spend.append(self._sum_untaxed(pos_p))
@@ -101,16 +81,24 @@ class PurchaseOverviewService(models.AbstractModel):
             current_pos = self._confirmed_pos_in_period(
                 company, current_start, current_end
             )
-            prev_pos = self._confirmed_pos_in_period(company, prev_start, prev_end)
+            prev_pos = (
+                self._confirmed_pos_in_period(company, prev_start, prev_end)
+                if compare_previous
+                else self.env["purchase.order"]
+            )
         else:
             current_pos = self.env["purchase.order"]
             prev_pos = self.env["purchase.order"]
 
         spend_m = self._sum_untaxed(current_pos) if has_purchase else 0.0
-        spend_prev = self._sum_untaxed(prev_pos) if has_purchase else 0.0
+        spend_prev = (
+            self._sum_untaxed(prev_pos)
+            if (has_purchase and compare_previous)
+            else 0.0
+        )
 
         po_count = len(current_pos) if has_purchase else 0
-        po_prev = len(prev_pos) if has_purchase else 0
+        po_prev = len(prev_pos) if (has_purchase and compare_previous) else 0
 
         aov = round(spend_m / po_count, 2) if po_count else 0.0
 
@@ -132,7 +120,7 @@ class PurchaseOverviewService(models.AbstractModel):
 
         avg_spend = sum(trend_spend) / len(trend_spend) if trend_spend else 0.0
         target_line = (
-            [round(avg_spend * 1.05, 2)] * trend_steps if trend_spend else []
+            [round(avg_spend * 1.05, 2)] * len(trend_spend) if trend_spend else []
         )
 
         spend_by_category = []
@@ -206,16 +194,30 @@ class PurchaseOverviewService(models.AbstractModel):
                     }
                 )
 
-        kpis = {
-            "purchased_spend": round(spend_m, 2),
-            "purchased_spend_delta_pct": self._pct_change(spend_m, spend_prev),
-            "open_rfq_count": rfq_count,
-            "open_rfq_value": round(rfq_value, 2),
-            "po_count": po_count,
-            "po_delta_pct": self._pct_change(po_count, po_prev),
-            "aov": aov,
-            "vendors_count": vendors_count,
-        }
+        if compare_previous:
+            kpis = {
+                "purchased_spend": round(spend_m, 2),
+                "purchased_spend_delta_pct": self._pct_change(
+                    spend_m, spend_prev
+                ),
+                "open_rfq_count": rfq_count,
+                "open_rfq_value": round(rfq_value, 2),
+                "po_count": po_count,
+                "po_delta_pct": self._pct_change(po_count, po_prev),
+                "aov": aov,
+                "vendors_count": vendors_count,
+            }
+        else:
+            kpis = {
+                "purchased_spend": round(spend_m, 2),
+                "purchased_spend_delta_pct": None,
+                "open_rfq_count": rfq_count,
+                "open_rfq_value": round(rfq_value, 2),
+                "po_count": po_count,
+                "po_delta_pct": None,
+                "aov": aov,
+                "vendors_count": vendors_count,
+            }
 
         return {
             "meta": meta,

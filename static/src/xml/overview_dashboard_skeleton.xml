@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.OverviewDashboardSkeleton">
+        <div class="o_so_skeleton">
+            <div class="o_so_skeleton_hero"/>
+            <div class="o_so_skeleton_content">
+                <div class="o_so_skeleton_kpis">
+                    <div class="o_so_skeleton_kpi" t-foreach="[1,2,3,4,5]" t-as="i" t-key="i"/>
+                </div>
+                <div class="o_so_skeleton_charts">
+                    <div class="o_so_skeleton_chart_lg"/>
+                    <div class="o_so_skeleton_chart_sm"/>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

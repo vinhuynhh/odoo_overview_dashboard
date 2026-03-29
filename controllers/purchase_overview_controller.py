@@ -9,5 +9,7 @@ class PurchaseOverviewController(http.Controller):
             return {"error": "Access denied"}
         period = kwargs.get("period", "month")
         return request.env["odoo.overview.purchase.service"].get_purchase_overview_data(
-            period=period
+            period=period,
+            date_from=kwargs.get("date_from"),
+            date_to=kwargs.get("date_to"),
         )

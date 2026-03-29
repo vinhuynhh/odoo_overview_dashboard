@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.OverviewShell">
+        <div class="o_overview_app_layout" t-att-class="{ o_overview_sidebar_collapsed: state.sidebarCollapsed }">
+            <OverviewSidebar
+                collapsed="state.sidebarCollapsed"
+                toggleLabel="sidebarToggleLabel"
+                navEntries="overviewNavEntries"
+                activeViewKey="state.activeView"
+                onToggleCollapsed="toggleSidebarCollapsed"
+                onSelectView="selectOverviewEntry"
+            />
+            <main class="o_overview_main">
+                <SalesDashboardBody t-if="state.activeView === 'sales'" t-key="'ov-sales'"/>
+                <PurchaseDashboardBody t-if="state.activeView === 'purchase'" t-key="'ov-purchase'"/>
+            </main>
+        </div>
+    </t>
+</templates>

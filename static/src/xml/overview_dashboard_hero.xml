@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.OverviewDashboardHero">
+        <header class="o_so_hero">
+            <div class="o_so_hero_glow" aria-hidden="true"/>
+            <div class="o_so_hero_text">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                    <div>
+                        <p class="o_so_eyebrow" t-esc="props.eyebrow"/>
+                        <h1 class="o_so_title" t-esc="props.title"/>
+                    </div>
+                    <div class="o_so_period_controls d-flex flex-wrap align-items-center gap-2">
+                        <select
+                            class="form-select o_so_period_select"
+                            t-on-change="(e) => props.onPeriodChange(e.target.value)"
+                        >
+                            <t t-foreach="props.periodOptions || []" t-as="opt" t-key="opt.value">
+                                <option t-att-value="opt.value" t-att-selected="props.period === opt.value" t-esc="opt.label"/>
+                            </t>
+                        </select>
+                        <div t-if="props.period === 'custom'" class="o_so_custom_range d-flex flex-wrap align-items-center gap-2">
+                            <input
+                                type="date"
+                                class="form-control o_so_custom_date"
+                                t-att-value="props.customDateFrom"
+                                t-on-change="(e) => props.onCustomDateFromChange and props.onCustomDateFromChange(e)"
+                            />
+                            <span class="text-muted small">—</span>
+                            <input
+                                type="date"
+                                class="form-control o_so_custom_date"
+                                t-att-value="props.customDateTo"
+                                t-on-change="(e) => props.onCustomDateToChange and props.onCustomDateToChange(e)"
+                            />
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-secondary"
+                                t-on-click="() => props.onApplyCustomRange and props.onApplyCustomRange()"
+                            >
+                                <t t-esc="props.customRangeApplyLabel"/>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+    </t>
+</templates>

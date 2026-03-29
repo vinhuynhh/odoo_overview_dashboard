@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.OverviewPanel">
+        <div class="o_so_panel h-100" t-att-style="props.animationOrder ? '--animation-order: ' + props.animationOrder + ';' : ''">
+            <div class="o_so_panel_head">
+                <h3 class="o_so_panel_title" t-esc="props.title"/>
+                <span class="o_so_panel_badge" t-if="props.badge" t-esc="props.badge"/>
+            </div>
+            <t t-slot="default"/>
+        </div>
+    </t>
+</templates>
