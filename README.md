@@ -1,53 +1,49 @@
-# Overview Dashboard (`odoo_overview_dashboard`)
+# Odoo Overview Dashboard
 
-Sales-focused overview for **Odoo 19** Community: an OWL client action with Chart.js, a foldable sidebar, and a pastel blue UI.
+OWL **Sales** dashboard for **Odoo 19** — KPIs, trend & mix charts, top products/customers, collapsible sidebar, pastel UI (Chart.js + Font Awesome).
 
-## Requirements
+**Depends:** `base`, `web`, `sale_management` (no `stock` required for the module).  
+**Optional SQL seeds** under `scripts/` expect **`sale_stock`** columns (e.g. `sale.order.picking_policy`).
 
-- Odoo **19.0**
-- Modules: `base`, `web`, `sale_management`
+## Install
 
-## Install / upgrade
+```bash
+# addons_path must include this folder (e.g. custom_addons/odoo_overview_dashboard)
+./odoo-bin -u odoo_overview_dashboard -d YOUR_DB
+```
 
-1. Add this folder to your addons path.
-2. Update Apps list, install **Business Overview Dashboard**, or from the shell:
+Apps → update list → install **Business Overview Dashboard**. After asset edits: **Developer → Clear assets** or restart.
 
-   ```bash
-   odoo-bin -u odoo_overview_dashboard -d YOUR_DATABASE
-   ```
+## Use
 
-3. After SCSS or asset changes, clear compiled assets (Developer mode → **Clear assets**) or restart the server.
+**Overview** → **Sales overview** → period: **month** / **quarter** / **year**.
 
-## Menu
+**Access:** `sales_team.group_sale_salesman`  
+**API:** `POST /odoo_overview_dashboard/sales/data` · body `{ "period": "month"|"quarter"|"year" }`
 
-**Overview** → **Sales overview** (root app menu with optional web icon).
+## Metrics (short)
 
-## Access
+- **Net revenue** — untaxed total, confirmed orders (`sale`, `done`), selected period.  
+- **Gross profit** — revenue − cost; cost = **standard price** × qty (UoM-safe).  
+- **Open quotations** — `draft`/`sent`, company-wide (not tied to period).  
 
-- JSON route: `/odoo_overview_dashboard/sales/data`
-- Users need **`sales_team.group_sale_salesman`** (Sales / User). Others see an access error on load.
+Details + disclaimer appear on screen; tune for your accounting if needed.
 
-## What the Sales screen shows
+## Code map
 
-- **Key metrics:** net revenue, gross profit (margin %), orders, average order value, open quotations (count + pipeline value untaxed), with month-over-month deltas where applicable.
-- **Trends & mix:** six-month line chart (revenue, gross profit, illustrative target line) and doughnut mix by product category (current month).
-- **Top performers:** top products and top customers by revenue for the current month.
-
-Gross profit uses **product standard price** as cost on order lines; net revenue is **untaxed** confirmed order totals. See the on-screen disclaimer.
-
-## Technical layout
-
-| Area | Location |
-|------|----------|
-| Client action & OWL | `static/src/js/sales_overview.js`, `static/src/xml/sales_overview.xml` |
-| Styles | `static/src/scss/sales_overview.scss` |
-| Data service | `models/sales_overview.py` (`odoo.overview.sales.service`) |
+| Layer | Path |
+|--------|------|
+| OWL | `static/src/js/sales_overview.js`, `xml/sales_overview.xml`, `scss/sales_overview.scss` |
+| Data | `models/sales_overview.py` → `odoo.overview.sales.service` |
 | HTTP | `controllers/sales_overview_controller.py` |
+| UI wiring | `views/menu.xml`, `views/sales_overview_action.xml` |
+
+**Dev seeds:** `scripts/seed_100_sale_orders.sql`, `scripts/seed_100_sale_orders_last_year.sql` — backup DB first; dev only.
 
 ## Roadmap
 
-Purchase and Inventory overview screens are planned as separate entries under the same app shell.
+Purchase & Inventory overviews (same app shell, separate actions).
 
-## License
+---
 
-LGPL-3 (see manifest).
+**License:** LGPL-3 · **Author:** DLHM · Issues & PRs welcome.
