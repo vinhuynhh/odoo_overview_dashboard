@@ -14,29 +14,41 @@ import {
 import { OverviewSidebar } from "./overview_sidebar";
 import { SalesDashboardBody } from "./sales_dashboard_body";
 import { PurchaseDashboardBody } from "./purchase_dashboard_body";
+import { InventoryDashboardBody } from "./inventory_dashboard_body";
 
 export class OverviewShell extends Component {
     static template = "odoo_overview_dashboard.OverviewShell";
-    static components = { OverviewSidebar, SalesDashboardBody, PurchaseDashboardBody };
+    static components = { OverviewSidebar, SalesDashboardBody, PurchaseDashboardBody, InventoryDashboardBody };
     static props = { "*": true };
     static displayName = _t("Overview");
 
     static extractProps(action) {
         const params = action.params || {};
-        const view = params.view === "purchase" ? "purchase" : "sales";
+        const view =
+            params.view === "purchase" ? "purchase" : params.view === "inventory" ? "inventory" : "sales";
         return { initialView: view };
     }
 
     setup() {
         this.menuService = useService("menu");
-        const startView = this.props.initialView === "purchase" ? "purchase" : "sales";
+        const startView =
+            this.props.initialView === "purchase"
+                ? "purchase"
+                : this.props.initialView === "inventory"
+                  ? "inventory"
+                  : "sales";
         this.state = useState({
             activeView: startView,
             sidebarCollapsed: browser.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1",
         });
 
         onWillUpdateProps((nextProps) => {
-            const v = nextProps.initialView === "purchase" ? "purchase" : "sales";
+            const v =
+                nextProps.initialView === "purchase"
+                    ? "purchase"
+                    : nextProps.initialView === "inventory"
+                      ? "inventory"
+                      : "sales";
             if (v !== this.state.activeView) {
                 this.state.activeView = v;
             }

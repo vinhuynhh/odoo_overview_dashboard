@@ -1,6 +1,6 @@
 # Business Overview Dashboard
 
-Native **Odoo 19** client application delivering **Sales** and **Purchase** executive overviews: KPIs, period analysis, trend and mix charts, ranked lists, and an in-app navigation shell built with **OWL** and **Chart.js**.
+Native **Odoo 19** client application delivering **Sales**, **Purchase**, and **Inventory** executive overviews: KPIs, period analysis, trend and mix charts, ranked lists, and an in-app navigation shell built with **OWL** and **Chart.js**.
 
 ![Sales overview — key metrics, revenue trend, category mix, and top performers](static/description/sales_overview_screenshot.png)
 
@@ -11,6 +11,7 @@ Native **Odoo 19** client application delivering **Sales** and **Purchase** exec
 - **Unified shell** — Single client action hosts a collapsible sidebar; switching between Sales and Purchase views updates the main content without reloading the whole action.
 - **Sales overview** — Net revenue, gross profit (standard-price–based cost), orders, average order value, open quotations; revenue and margin trends; category mix; top products and customers.
 - **Purchase overview** — Confirmed PO spend, PO count, average PO value, active vendors, open RFQs; spend trend; category mix; top products and vendors.
+- **Inventory overview** — On hand, reserved, available, approximate on-hand value; open transfers; low stock rules; dead stock; inbound vs outbound movement trend; value mix by category; top products by value.
 - **Period selection** — Preset ranges (e.g. this week, month, quarter, year, last month/quarter/year, rolling 7 / 30 days) plus **custom date range** (inclusive; max span enforced server-side). **Custom range** does not compute prior-period comparisons.
 - **Accessibility & UX** — KPI tooltips, responsive layout, shared styling via SCSS.
 
@@ -18,11 +19,9 @@ Native **Odoo 19** client application delivering **Sales** and **Purchase** exec
 
 ## Requirements
 
-| Item | Notes |
-|------|--------|
-| **Odoo** | 19.0 |
-| **Python dependencies** | Uses `dateutil` (standard in Odoo) |
-| **Module dependencies** | `base`, `web`, `sale_management`, `purchase` |
+- **Odoo**: 19.0  
+- **Python dependencies**: `dateutil` (standard in Odoo)  
+- **Module dependencies**: `base`, `web`, `sale_management`, `purchase`, `stock`  
 
 Optional SQL scripts under `scripts/` may assume additional modules (e.g. `sale_stock` fields such as `picking_policy`). Use only on non-production databases with a backup.
 
@@ -63,10 +62,9 @@ On-screen disclaimers remind administrators to align definitions with internal a
 
 Authenticated routes (same groups as above):
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| `POST` | `/odoo_overview_dashboard/sales/data` | Sales dashboard payload |
-| `POST` | `/odoo_overview_dashboard/purchase/data` | Purchase dashboard payload |
+- `POST` `/odoo_overview_dashboard/sales/data` — Sales dashboard payload  
+- `POST` `/odoo_overview_dashboard/purchase/data` — Purchase dashboard payload  
+- `POST` `/odoo_overview_dashboard/inventory/data` — Inventory dashboard payload  
 
 **Request parameters**
 
@@ -75,35 +73,23 @@ Authenticated routes (same groups as above):
 
 Example:
 
-```json
-{
-  "period": "quarter"
-}
-```
+`{"period":"quarter"}`
 
 Custom range:
 
-```json
-{
-  "period": "custom",
-  "date_from": "2025-01-01",
-  "date_to": "2025-03-31"
-}
-```
+`{"period":"custom","date_from":"2025-01-01","date_to":"2025-03-31"}`
 
 ---
 
 ## Technical structure
 
-| Area | Location |
-|------|----------|
-| Client shell & dashboards | `static/src/js/overview/`, `static/src/xml/` |
-| Styling | `static/src/scss/sales_overview.scss` |
-| Period logic (shared) | `models/overview_period.py` |
-| Sales / Purchase services | `models/sales_overview.py`, `models/purchase_overview.py` |
-| Routes | `controllers/sales_overview_controller.py`, `controllers/purchase_overview_controller.py` |
-| Menus & client actions | `views/menu.xml`, `views/sales_overview_action.xml`, `views/purchase_overview_action.xml` |
-| Access | `security/ir.model.access.csv` |
+- **Client shell & dashboards**: `static/src/js/overview/`, `static/src/xml/`  
+- **Styling**: `static/src/scss/sales_overview.scss`  
+- **Period logic (shared)**: `models/overview_period.py`  
+- **Services**: `models/sales_overview.py`, `models/purchase_overview.py`, `models/inventory_overview.py`  
+- **Routes**: `controllers/*_overview_controller.py`  
+- **Menus & client actions**: `views/menu.xml`, `views/*_overview_action.xml`  
+- **Access**: `security/ir.model.access.csv`  
 
 The registered client action tag is **`odoo_overview_dashboard.overview_shell_action`**; menu actions pass `params` to distinguish the initial view (`sales` vs `purchase`).
 
@@ -111,7 +97,7 @@ The registered client action tag is **`odoo_overview_dashboard.overview_shell_ac
 
 ## Roadmap
 
-- **Inventory** overview using the same application shell (planned).
+- Add deeper inventory metrics (aging buckets, stockouts, lead-time/on-time signals) as optional modules/data becomes available.
 
 ---
 

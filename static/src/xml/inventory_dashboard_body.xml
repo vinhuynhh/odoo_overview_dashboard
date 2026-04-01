@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="odoo_overview_dashboard.InventoryDashboardBody">
+        <div class="o_so_dashboard">
+            <t t-if="state.loading and !state.data.meta.period_label">
+                <OverviewDashboardSkeleton/>
+            </t>
+            <t t-elif="state.error">
+                <div class="o_so_error" t-esc="state.error"/>
+            </t>
+            <t t-else="">
+                <OverviewDashboardHero t-props="heroProps"/>
+                <div class="o_so_content" t-att-class="{ 'o_so_loading_overlay': state.loading }">
+                    <section class="o_so_section" t-if="state.data.meta.has_inventory_access">
+                        <OverviewSectionHeader title="'Stock Status'" description="'Stock levels and availability'"/>
+                        <div class="o_so_kpi_grid">
+                            <OverviewKpiCard label="'On hand (qty)'" iconClass="'fa-cubes'" animationOrder="1" helpText="kpiHelp.onhandQty">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="state.data.kpis.onhand_qty"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">Total on hand</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Reserved (qty)'" iconClass="'fa-lock'" animationOrder="2" helpText="kpiHelp.reservedQty">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="state.data.kpis.reserved_qty"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">Allocated to operations</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Available (qty)'" iconClass="'fa-unlock-alt'" animationOrder="3" helpText="kpiHelp.availableQty">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="state.data.kpis.available_qty"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">On hand − reserved</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'On-hand value'" iconClass="'fa-money'" animationOrder="4" helpText="kpiHelp.onhandValue">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="formatMoney(state.data.kpis.onhand_value)"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">Std. cost × qty</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Products'" iconClass="'fa-tags'" animationOrder="5" helpText="kpiHelp.products" highlight="true">
+                                <t t-set-slot="value">
+                                    <div class="d-flex align-items-center justify-content-between gap-2">
+                                        <div>
+                                            <p class="o_so_kpi_value mb-0" t-esc="state.data.products.total"/>
+                                            <ul class="o_inv_products_legend" t-if="productTypeLegend.length">
+                                                <li t-foreach="productTypeLegend" t-as="it" t-key="it.key">
+                                                    <span class="o_inv_legend_dot" t-att-style="'background-color: ' + it.color + ';'"/>
+                                                    <span class="text-muted">
+                                                        <strong t-esc="it.count"/> <t t-esc="it.label"/>
+                                                    </span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="o_inv_products_mini">
+                                            <canvas t-ref="productsDonutCanvas"/>
+                                        </div>
+                                    </div>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">By product type</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            
+                        </div>
+                    </section>
+
+                    <section class="o_so_section" t-if="state.data.meta.has_inventory_access">
+                        <OverviewSectionHeader title="'Risk'" description="'Risk of stockouts and obsolescence'"/>
+                        <div class="o_so_kpi_grid">
+                            <OverviewKpiCard label="'Low stock rules'" iconClass="'fa-warning'" animationOrder="6" helpText="kpiHelp.lowStockRules">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="state.data.kpis.low_stock_rules"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">Below minimum</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                            <OverviewKpiCard label="'Dead stock'" iconClass="'fa-hourglass-end'" animationOrder="7" helpText="kpiHelp.deadStock">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value">
+                                        <t t-esc="state.data.kpis.dead_stock_products"/>
+                                        <span class="o_so_kpi_subval text-muted"> · <t t-esc="formatMoney(state.data.kpis.dead_stock_value)"/></span>
+                                    </p>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint">No move in 90 days</span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                        </div>
+                    </section>
+
+                    <section class="o_so_section" t-if="state.data.meta.has_inventory_access">
+                        <OverviewSectionHeader title="'Transfers'" description="'Receipts and deliveries workload'"/>
+                        <div class="o_so_kpi_grid">
+                            <OverviewKpiCard label="'Receipts (Incoming)'" iconClass="'fa-download'" animationOrder="10" highlight="true">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="state.data.receipts.total"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint"></span>
+                                        
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+
+                            <OverviewKpiCard label="'Deliveries (Outgoing)'" iconClass="'fa-upload'" animationOrder="11" highlight="true">
+                                <t t-set-slot="value">
+                                    <p class="o_so_kpi_value" t-esc="state.data.deliveries.total"/>
+                                </t>
+                                <t t-set-slot="footer">
+                                    <div class="o_so_kpi_foot">
+                                        <span class="o_so_kpi_hint"></span>
+                                    </div>
+                                </t>
+                            </OverviewKpiCard>
+                        </div>
+                    </section>
+
+                    <section class="o_so_empty_sales text-muted" t-if="!state.data.meta.has_inventory_access">
+                        You need Inventory access to view this dashboard.
+                    </section>
+
+                    <section class="o_so_section" t-if="state.data.meta.has_inventory_access">
+                        <OverviewSectionHeader title="'Inbound vs outbound'" description="'Completed stock moves by bucket'"/>
+                        <div class="o_so_charts row g-3 mb-0">
+                            <div class="col-12 col-xl-8">
+                                <OverviewPanel title="'Movement flow'" badge="'Trend'" animationOrder="8">
+                                    <div class="o_so_chart">
+                                        <canvas t-ref="flowCanvas"/>
+                                    </div>
+                                </OverviewPanel>
+                            </div>
+                            <div class="col-12 col-xl-4">
+                                <OverviewPanel title="'On-hand value mix'" badge="'Approx.'" animationOrder="9">
+                                    <div class="o_so_chart o_so_chart_donut">
+                                        <t t-if="state.data.onhand_by_category.length">
+                                            <canvas t-ref="donutCanvas"/>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="o_so_chart_empty">No category data</div>
+                                        </t>
+                                    </div>
+                                </OverviewPanel>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="o_so_section" t-if="state.data.meta.has_inventory_access">
+                        <OverviewSectionHeader title="'Highest value on hand'" description="'Top products by approximate on-hand value'"/>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <OverviewPanel title="'Top products'" badge="'By value'" animationOrder="16">
+                                    <OverviewRankedTable t-props="rankedProductsProps"/>
+                                </OverviewPanel>
+                            </div>
+                        </div>
+                    </section>
+
+                    <p class="o_so_disclaimer" t-esc="state.data.meta.disclaimer"/>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>
+

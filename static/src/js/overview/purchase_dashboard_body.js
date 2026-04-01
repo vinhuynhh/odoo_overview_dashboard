@@ -287,7 +287,7 @@ export class PurchaseDashboardBody extends Component {
                         {
                             label: _t("Target (avg +5%)"),
                             data: trend.target_spend || [],
-                            borderColor: CHART_COLORS.greyLine,
+                            borderColor: CHART_COLORS.pastelAmber,
                             backgroundColor: "transparent",
                             borderDash: [6, 4],
                             fill: false,

@@ -13,6 +13,7 @@
             <main class="o_overview_main">
                 <SalesDashboardBody t-if="state.activeView === 'sales'" t-key="'ov-sales'"/>
                 <PurchaseDashboardBody t-if="state.activeView === 'purchase'" t-key="'ov-purchase'"/>
+                <InventoryDashboardBody t-if="state.activeView === 'inventory'" t-key="'ov-inventory'"/>
             </main>
         </div>
     </t>

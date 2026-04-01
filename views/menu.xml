@@ -24,4 +24,12 @@
         action="action_purchase_overview_dashboard"
         sequence="20"
     />
+
+    <menuitem
+        id="menu_inventory_overview_dashboard"
+        name="Inventory"
+        parent="menu_overview_root"
+        action="action_inventory_overview_dashboard"
+        sequence="30"
+    />
 </odoo>

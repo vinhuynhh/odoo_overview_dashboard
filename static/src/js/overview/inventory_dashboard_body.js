@@ -1,14 +1,15 @@
 /** @odoo-module **/
 
-import { Component, onWillStart, onWillUnmount, useState, useEffect, useRef } from "@odoo/owl";
+import { Component, onWillStart, onWillUnmount, useEffect, useRef, useState } from "@odoo/owl";
 import { loadBundle } from "@web/core/assets";
 import { rpc } from "@web/core/network/rpc";
 import { browser } from "@web/core/browser/browser";
-import { session } from "@web/session";
 import { _t } from "@web/core/l10n/translation";
+import { session } from "@web/session";
 import { formatMonetary } from "@web/views/fields/formatters";
+
 import { CHART_COLORS, DONUT_PALETTE, getOverviewPeriodOptions } from "./overview_constants";
-import { emptySalesDashboardData, normalizeSalesDashboardPayload } from "./overview_data_sales";
+import { emptyInventoryDashboardData, normalizeInventoryDashboardPayload } from "./overview_data_inventory";
 import { deltaPillClass, formatDeltaPct } from "./overview_formatters";
 import { OverviewDashboardHero } from "./overview_dashboard_hero";
 import { OverviewDashboardSkeleton } from "./overview_dashboard_skeleton";
@@ -17,8 +18,8 @@ import { OverviewKpiCard } from "./overview_kpi_card";
 import { OverviewPanel } from "./overview_panel";
 import { OverviewRankedTable } from "./overview_ranked_table";
 
-export class SalesDashboardBody extends Component {
-    static template = "odoo_overview_dashboard.SalesDashboardBody";
+export class InventoryDashboardBody extends Component {
+    static template = "odoo_overview_dashboard.InventoryDashboardBody";
     static components = {
         OverviewDashboardHero,
         OverviewDashboardSkeleton,
@@ -29,15 +30,17 @@ export class SalesDashboardBody extends Component {
     };
 
     setup() {
-        this.monthlyCanvasRef = useRef("monthlyCanvas");
+        this.flowCanvasRef = useRef("flowCanvas");
         this.donutCanvasRef = useRef("donutCanvas");
-        this.monthlyChart = null;
+        this.productsDonutRef = useRef("productsDonutCanvas");
+        this.flowChart = null;
         this.donutChart = null;
+        this.productsChart = null;
 
         this.state = useState({
             loading: true,
             error: null,
-            data: emptySalesDashboardData(),
+            data: emptyInventoryDashboardData(),
             period: "month",
             customDateFrom: "",
             customDateTo: "",
@@ -67,8 +70,8 @@ export class SalesDashboardBody extends Component {
 
     get heroProps() {
         return {
-            eyebrow: _t("Sales intelligence"),
-            title: _t("Business Overview"),
+            eyebrow: _t("Stock health"),
+            title: _t("Inventory overview"),
             periodLabel: this.state.data.meta.period_label,
             userName: this.sessionUserName,
             period: this.state.period,
@@ -94,89 +97,74 @@ export class SalesDashboardBody extends Component {
     get sectionKeyMetricsProps() {
         return {
             title: _t("Key metrics"),
-            description: _t("Performance and pipeline health"),
+            description: _t("Availability, risk, and workload"),
         };
     }
 
     get kpiHelp() {
         return {
-            netRevenue: _t(
-                "Untaxed subtotal on orders in Sale or Done with an order date in this period."
-            ),
-            grossProfit: _t(
-                "Per line: price subtotal minus standard cost for the sold quantity, summed for the period’s orders."
-            ),
-            orders: _t("Sale/Done orders whose order date falls in this period."),
-            aov: _t("This period’s untaxed net revenue divided by its order count."),
-            openQuotations: _t(
-                "Draft or sent quotes: count and untaxed total—not yet confirmed as sales orders."
-            ),
+            onhandQty: _t("Total quantity on hand across internal locations (from stock quants)."),
+            reservedQty: _t("Quantity reserved for operations (allocated but not yet moved)."),
+            availableQty: _t("On hand minus reserved — what is immediately available."),
+            onhandValue: _t("Approximate value using product standard cost × on-hand quantity."),
+            lowStockRules: _t("Reordering rules currently below their minimum quantity."),
+            deadStock: _t("Products with on-hand quantity and no done stock move in the last 90 days."),
+            products: _t("Total products and breakdown by product type (Stockable, Consumable, Service)."),
         };
     }
 
     get sectionTrendsProps() {
         return {
-            title: _t("Trends & mix"),
-            description: _t("Revenue trajectory and category contribution"),
+            title: _t("Inbound vs outbound"),
+            description: _t("Stock movement completed during each bucket"),
         };
+    }
+
+    get sectionOrdersProps() {
+        return {
+            title: _t("Transfers"),
+            description: _t("Receipts and deliveries workload"),
+        };
+    }
+
+    productTypeLabel(t) {
+        const key = t || "";
+        return (
+            {
+                consu: _t("Goods"),
+                service: _t("Service"),
+                combo: _t("Combo"),
+            }[key] || key
+        );
+    }
+
+    get productTypeLegend() {
+        const pt = this.state.data.products?.by_type || [];
+        return pt.map((r, idx) => ({
+            key: r.type,
+            label: this.productTypeLabel(r.type),
+            count: r.count ?? 0,
+            color: DONUT_PALETTE[idx % DONUT_PALETTE.length],
+        }));
     }
 
     get sectionTopProps() {
         return {
-            title: _t("Top performers"),
-            description: _t("Products and customers by revenue this period"),
+            title: _t("Highest value on hand"),
+            description: _t("Products by on-hand value (approx.)"),
         };
     }
 
-    get rankedSellersProps() {
+    get rankedProductsProps() {
         return {
-            rows: this.state.data.top_sellers,
+            rows: this.state.data.top_products,
             rowKeyField: "product_id",
             mainField: "name",
             subField: "categ_name",
             amountField: "amount",
             formatAmount: (v) => this.formatMoney(v),
-            emptyMessage: _t("No sales this period."),
+            emptyMessage: _t("No inventory data."),
         };
-    }
-
-    get rankedCustomersProps() {
-        return {
-            rows: this.state.data.top_customers,
-            rowKeyField: "partner_id",
-            mainField: "name",
-            amountField: "amount",
-            formatAmount: (v) => this.formatMoney(v),
-            emptyMessage: _t("No customers this period."),
-        };
-    }
-
-    get panelRevenueTrendProps() {
-        return { title: _t("Revenue & gross profit"), badge: _t("Trend"), animationOrder: 6 };
-    }
-
-    get panelMixProps() {
-        return { title: _t("Mix by category"), badge: _t("This period"), animationOrder: 7 };
-    }
-
-    get panelTopProductsProps() {
-        return { title: _t("Top products"), badge: _t("By revenue"), animationOrder: 8 };
-    }
-
-    get panelTopCustomersProps() {
-        return { title: _t("Top customers"), badge: _t("This period"), animationOrder: 9 };
-    }
-
-    get currencyId() {
-        const c = session.user_companies;
-        if (!c) {
-            return undefined;
-        }
-        return c.allowed_companies[c.current_company]?.currency_id;
-    }
-
-    get sessionUserName() {
-        return session.name || session.username || "";
     }
 
     deltaPillClass(pct) {
@@ -189,6 +177,16 @@ export class SalesDashboardBody extends Component {
 
     formatMoney(value) {
         return formatMonetary(value ?? 0, { currencyId: this.currencyId });
+    }
+
+    get currencyId() {
+        const c = session.user_companies;
+        if (!c) return undefined;
+        return c.allowed_companies[c.current_company]?.currency_id;
+    }
+
+    get sessionUserName() {
+        return session.name || session.username || "";
     }
 
     _fmtIsoDate(d) {
@@ -216,14 +214,14 @@ export class SalesDashboardBody extends Component {
                 params.date_from = this.state.customDateFrom;
                 params.date_to = this.state.customDateTo;
             }
-            const result = await rpc("/odoo_overview_dashboard/sales/data", params);
+            const result = await rpc("/odoo_overview_dashboard/inventory/data", params);
             if (result?.error) {
                 this.state.error = result.error;
             } else {
-                this.state.data = normalizeSalesDashboardPayload(result);
+                this.state.data = normalizeInventoryDashboardPayload(result);
             }
         } catch {
-            this.state.error = "Failed to load sales overview";
+            this.state.error = "Failed to load inventory overview";
         } finally {
             this.state.loading = false;
         }
@@ -241,9 +239,7 @@ export class SalesDashboardBody extends Component {
     }
 
     async applyCustomRange() {
-        if (this.state.period !== "custom") {
-            return;
-        }
+        if (this.state.period !== "custom") return;
         await this.fetchData();
     }
 
@@ -259,54 +255,40 @@ export class SalesDashboardBody extends Component {
     _renderCharts() {
         this._destroyCharts();
         const Chart = window.Chart;
-        if (!Chart) {
-            return;
-        }
-        const data = this.state.data;
-        if (!data?.monthly_trend?.labels?.length) {
-            return;
-        }
-        const trend = data.monthly_trend;
-        const axis = this._axisTheme();
+        if (!Chart) return;
 
-        if (this.monthlyCanvasRef.el) {
-            this.monthlyChart = new Chart(this.monthlyCanvasRef.el, {
+        const data = this.state.data;
+        const trend = data.monthly_trend;
+        if (!trend?.labels?.length) return;
+
+        if (this.flowCanvasRef.el) {
+            const axis = this._axisTheme();
+            this.flowChart = new Chart(this.flowCanvasRef.el, {
                 type: "line",
                 data: {
                     labels: trend.labels,
                     datasets: [
                         {
-                            label: _t("Net revenue"),
-                            data: trend.revenue,
+                            label: _t("Inbound qty"),
+                            data: trend.inbound_qty || [],
                             borderColor: CHART_COLORS.pastelBlueDeep,
                             backgroundColor: "rgba(88, 134, 220, 0.12)",
                             fill: true,
-                            tension: 0.4,
-                            pointRadius: 4,
-                            pointBackgroundColor: CHART_COLORS.pastelBlueDeep,
-                            borderWidth: 2,
-                        },
-                        {
-                            label: _t("Gross profit"),
-                            data: trend.gross_profit,
-                            borderColor: CHART_COLORS.pastelGreen,
-                            backgroundColor: CHART_COLORS.pastelGreenSoft,
-                            fill: false,
-                            tension: 0.4,
+                            tension: 0.35,
                             pointRadius: 3,
-                            pointBackgroundColor: CHART_COLORS.pastelGreen,
                             borderWidth: 2,
+                            pointBackgroundColor: CHART_COLORS.pastelBlueDeep,
                         },
                         {
-                            label: _t("Target (avg +5%)"),
-                            data: trend.target_revenue || [],
-                            borderColor: CHART_COLORS.pastelAmber,
-                            backgroundColor: "transparent",
-                            borderDash: [6, 4],
+                            label: _t("Outbound qty"),
+                            data: trend.outbound_qty || [],
+                            borderColor: CHART_COLORS.pastelRed,
+                            backgroundColor: CHART_COLORS.pastelRedSoft,
                             fill: false,
-                            tension: 0,
-                            pointRadius: 0,
-                            borderWidth: 1.5,
+                            tension: 0.35,
+                            pointRadius: 3,
+                            borderWidth: 2,
+                            pointBackgroundColor: CHART_COLORS.pastelRed,
                         },
                     ],
                 },
@@ -322,7 +304,7 @@ export class SalesDashboardBody extends Component {
             });
         }
 
-        const mix = data.revenue_by_category || [];
+        const mix = data.onhand_by_category || [];
         if (this.donutCanvasRef.el && mix.length) {
             this.donutChart = new Chart(this.donutCanvasRef.el, {
                 type: "doughnut",
@@ -349,14 +331,39 @@ export class SalesDashboardBody extends Component {
                 },
             });
         }
+
+        const pt = data.products?.by_type || [];
+        if (this.productsDonutRef.el && pt.length) {
+            this.productsChart = new Chart(this.productsDonutRef.el, {
+                type: "doughnut",
+                data: {
+                    labels: pt.map((r) => this.productTypeLabel(r.type)),
+                    datasets: [
+                        {
+                            data: pt.map((r) => r.count),
+                            backgroundColor: DONUT_PALETTE.slice(0, pt.length),
+                            borderWidth: 0,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: "72%",
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true },
+                    },
+                },
+            });
+        }
     }
 
     _destroyCharts() {
-        for (const ch of [this.monthlyChart, this.donutChart]) {
-            if (ch) {
-                ch.destroy();
-            }
+        for (const ch of [this.flowChart, this.donutChart, this.productsChart]) {
+            if (ch) ch.destroy();
         }
-        this.monthlyChart = this.donutChart = null;
+        this.flowChart = this.donutChart = this.productsChart = null;
     }
 }
+

@@ -632,6 +632,43 @@ body.o_overview_sidebar_mode .o_main_navbar .o_menu_sections {
     line-height: 1.2;
 }
 
+.o_inv_products_mini {
+    width: 58px;
+    height: 58px;
+    flex: 0 0 58px;
+    position: relative;
+
+    canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+}
+
+.o_inv_products_legend {
+    list-style: none;
+    padding: 0;
+    margin: 0.35rem 0 0;
+    display: grid;
+    gap: 0.2rem;
+    font-size: 0.78rem;
+    line-height: 1.1;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        min-width: 0;
+    }
+}
+
+.o_inv_legend_dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    flex: 0 0 10px;
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
 .o_so_kpi_subval {
     font-size: 0.85rem;
     font-weight: 600;
